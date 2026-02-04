@@ -286,6 +286,8 @@ func (m *Manager) flush(ctx context.Context, isCritical bool) {
 
 	pushReq := batch.ToPushRequest()
 
+	log.Printf("Pushing %d log entries to Loki", len(entries))
+
 	var err error
 	if isCritical {
 		err = m.lokiClient.PushCritical(ctx, pushReq)
@@ -317,6 +319,7 @@ func (m *Manager) criticalFlush(ctx context.Context) {
 		batch.Add(entries)
 
 		pushReq := batch.ToPushRequest()
+		log.Printf("Pushing %d log entries to Loki (critical)", len(entries))
 		if err := m.lokiClient.PushCritical(ctx, pushReq); err != nil {
 			log.Printf("Critical flush failed: %v", err)
 		}
