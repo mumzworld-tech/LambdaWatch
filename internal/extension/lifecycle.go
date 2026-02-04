@@ -2,7 +2,6 @@ package extension
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"os"
 	"sync"
@@ -251,8 +250,6 @@ func (m *Manager) shouldFlush() bool {
 // onRuntimeDone is called when platform.runtimeDone is received
 // This triggers a critical flush to ensure all logs are shipped at invocation end
 func (m *Manager) onRuntimeDone(requestID string) {
-	log.Printf("Received runtimeDone for request: %s, triggering critical flush (buffer: %d entries)", requestID, m.buffer.Len())
-
 	// Transition to flushing state
 	m.setState(StateFlushing)
 
@@ -298,26 +295,19 @@ func (m *Manager) flush(ctx context.Context, isCritical bool) {
 
 	if err != nil {
 		log.Printf("Failed to push logs to Loki: %v", err)
-	} else {
-		log.Printf("Pushed %d log entries to Loki", len(entries))
 	}
 }
 
 // criticalFlush flushes all buffered logs with higher retry count
 func (m *Manager) criticalFlush(ctx context.Context) {
-	log.Printf("Critical flush starting (buffer: %d entries)", m.buffer.Len())
-
 	// Flush all remaining entries
 	for m.buffer.Len() > 0 {
-		log.Printf("Critical flush loop iteration (buffer: %d)", m.buffer.Len())
 		var entries []buffer.LogEntry
 		if m.cfg.MaxBatchSizeBytes > 0 {
 			entries = m.buffer.FlushBySize(m.cfg.BatchSize, m.cfg.MaxBatchSizeBytes)
 		} else {
 			entries = m.buffer.Flush(m.cfg.BatchSize)
 		}
-
-		log.Printf("Got %d entries from buffer", len(entries))
 
 		if len(entries) == 0 {
 			break
@@ -327,15 +317,10 @@ func (m *Manager) criticalFlush(ctx context.Context) {
 		batch.Add(entries)
 
 		pushReq := batch.ToPushRequest()
-		jsonBody, _ := json.Marshal(pushReq)
-		log.Printf("Pushing to Loki: %s", string(jsonBody[:min(500, len(jsonBody))]))
 		if err := m.lokiClient.PushCritical(ctx, pushReq); err != nil {
 			log.Printf("Critical flush failed: %v", err)
-		} else {
-			log.Printf("Critical flush pushed %d entries to Loki", len(entries))
 		}
 	}
-	log.Printf("Critical flush complete")
 }
 
 func (m *Manager) shutdown(ctx context.Context) error {

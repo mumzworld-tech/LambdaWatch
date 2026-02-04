@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"net/http"
 	"time"
@@ -153,24 +152,18 @@ func (c *Client) doPush(ctx context.Context, body io.Reader, contentEncoding str
 		req.Header.Set("X-Scope-OrgID", c.tenantID)
 	}
 
-	log.Printf("Sending HTTP request to Loki...")
 	resp, err := c.httpClient.Do(req)
-	log.Printf("HTTP request completed, err: %v", err)
 	if err != nil {
 		return &retryableError{err: fmt.Errorf("request failed: %w", err)}
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
-	log.Printf("Loki response: status=%d, body=%s", resp.StatusCode, string(respBody))
-
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		log.Printf("Loki push successful: %d", resp.StatusCode)
 		return nil
 	}
 
+	respBody, _ := io.ReadAll(resp.Body)
 	err = fmt.Errorf("push failed with status %d: %s", resp.StatusCode, string(respBody))
-	log.Printf("Loki push failed: %v", err)
 
 	// Retry on 429 (rate limited) or 5xx (server errors)
 	if resp.StatusCode == 429 || resp.StatusCode >= 500 {

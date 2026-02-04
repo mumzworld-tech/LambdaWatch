@@ -85,8 +85,6 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	log.Printf("Received telemetry: %d bytes", len(body))
-
 	var events []TelemetryEvent
 	if err := json.Unmarshal(body, &events); err != nil {
 		log.Printf("Failed to parse telemetry events: %v", err)
@@ -164,7 +162,6 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 
 	if len(entries) > 0 {
 		s.buffer.AddBatch(entries)
-		log.Printf("Added %d entries to buffer (total: %d)", len(entries), s.buffer.Len())
 	}
 
 	// Trigger critical flush AFTER entries are added to buffer
