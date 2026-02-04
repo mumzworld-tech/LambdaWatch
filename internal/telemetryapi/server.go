@@ -85,6 +85,8 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	log.Printf("Received telemetry: %d bytes", len(body))
+
 	var events []TelemetryEvent
 	if err := json.Unmarshal(body, &events); err != nil {
 		log.Printf("Failed to parse telemetry events: %v", err)
@@ -93,6 +95,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	entries := make([]buffer.LogEntry, 0, len(events))
+	var runtimeDoneRequestID string
 
 	for _, event := range events {
 		switch event.Type {
@@ -105,15 +108,11 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case EventTypePlatformRuntimeDone:
-			// Trigger critical flush when invocation completes
-			var reqID string
+			// Mark for critical flush after entries are added
 			if record, ok := event.Record.(map[string]interface{}); ok {
 				if id, ok := record["requestId"].(string); ok {
-					reqID = id
+					runtimeDoneRequestID = id
 				}
-			}
-			if s.onRuntimeDone != nil {
-				s.onRuntimeDone(reqID)
 			}
 
 		case EventTypeFunction, EventTypeExtension:
@@ -165,6 +164,12 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 
 	if len(entries) > 0 {
 		s.buffer.AddBatch(entries)
+		log.Printf("Added %d entries to buffer (total: %d)", len(entries), s.buffer.Len())
+	}
+
+	// Trigger critical flush AFTER entries are added to buffer
+	if runtimeDoneRequestID != "" && s.onRuntimeDone != nil {
+		s.onRuntimeDone(runtimeDoneRequestID)
 	}
 
 	w.WriteHeader(http.StatusOK)

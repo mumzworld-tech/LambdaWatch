@@ -35,8 +35,8 @@ func NewClient(extensionID string) *Client {
 // Subscribe subscribes to the Lambda Telemetry API
 func (c *Client) Subscribe(ctx context.Context, listenerURI string) error {
 	req := SubscribeRequest{
-		SchemaVersion: "2022-12-13",
-		Types:         []string{EventTypePlatformStart, EventTypePlatformRuntimeDone, EventTypePlatformReport, EventTypeFunction, EventTypeExtension},
+		SchemaVersion: "2022-07-01",
+		Types:         []string{"platform", "function", "extension"},
 		Buffering: BufferConfig{
 			MaxItems:  1000,
 			MaxBytes:  262144,
