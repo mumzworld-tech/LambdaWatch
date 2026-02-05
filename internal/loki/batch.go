@@ -50,7 +50,9 @@ func (b *Batch) ToPushRequest() *PushRequest {
 func (b *Batch) toSingleStreamRequest() *PushRequest {
 	values := make([][]string, len(b.entries))
 	for i, entry := range b.entries {
-		ts := strconv.FormatInt(entry.Timestamp, 10)
+		// Convert milliseconds to nanoseconds for Loki
+		tsNano := entry.Timestamp * 1000000
+		ts := strconv.FormatInt(tsNano, 10)
 		values[i] = []string{ts, entry.Message}
 	}
 
@@ -93,7 +95,9 @@ func (b *Batch) toGroupedStreamRequest() *PushRequest {
 		// Build values for this stream
 		values := make([][]string, len(entries))
 		for i, entry := range entries {
-			ts := strconv.FormatInt(entry.Timestamp, 10)
+			// Convert milliseconds to nanoseconds for Loki
+			tsNano := entry.Timestamp * 1000000
+			ts := strconv.FormatInt(tsNano, 10)
 			values[i] = []string{ts, entry.Message}
 		}
 

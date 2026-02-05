@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
@@ -104,11 +105,11 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 					s.currentRequestID = reqID
 				}
 			}
-			// Ship platform.start log
+			// Ship platform.start log in Lambda format
 			ts := parseTimestamp(event.Time)
 			entry := buffer.LogEntry{
 				Timestamp: ts,
-				Message:   formatRecord(event.Record),
+				Message:   formatPlatformStart(event.Record),
 				Type:      event.Type,
 				RequestID: s.currentRequestID,
 			}
@@ -124,7 +125,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			ts := parseTimestamp(event.Time)
 			entry := buffer.LogEntry{
 				Timestamp: ts,
-				Message:   formatRecord(event.Record),
+				Message:   formatPlatformRuntimeDone(event.Record),
 				Type:      event.Type,
 				RequestID: s.currentRequestID,
 			}
@@ -132,8 +133,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 
 		case EventTypeFunction, EventTypeExtension:
 			// Process function and extension logs
-			ts := parseTimestamp(event.Time)
-			message := formatRecord(event.Record)
+			message, ts := formatRecordWithTimestamp(event.Record, event.Time)
 
 			// Extract request ID from message if enabled
 			requestID := s.currentRequestID
@@ -164,9 +164,9 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case EventTypePlatformReport:
-			// Log platform report
+			// Log platform report in Lambda format
 			ts := parseTimestamp(event.Time)
-			message := formatRecord(event.Record)
+			message := formatPlatformReport(event.Record)
 			entry := buffer.LogEntry{
 				Timestamp: ts,
 				Message:   message,
@@ -213,6 +213,86 @@ func formatRecord(record interface{}) string {
 	if idx := findJSONStart(msg); idx > 0 {
 		return msg[idx:]
 	}
+	return msg
+}
+
+// formatRecordWithTimestamp extracts timestamp from Lambda prefix and returns cleaned message
+func formatRecordWithTimestamp(record interface{}, fallbackTime string) (string, int64) {
+	var msg string
+	switch v := record.(type) {
+	case string:
+		msg = v
+	default:
+		b, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("%v", v), parseTimestamp(fallbackTime)
+		}
+		msg = string(b)
+	}
+
+	// Try to extract timestamp from Lambda prefix: "2026-02-05T08:12:42.944Z\t..."
+	if idx := findJSONStart(msg); idx > 0 {
+		prefix := msg[:idx]
+		if tabIdx := strings.Index(prefix, "\t"); tabIdx > 0 {
+			if ts := parseTimestamp(prefix[:tabIdx]); ts > 0 {
+				return msg[idx:], ts
+			}
+		}
+		return msg[idx:], parseTimestamp(fallbackTime)
+	}
+	return msg, parseTimestamp(fallbackTime)
+}
+
+// formatPlatformStart formats platform.start event as Lambda START message
+func formatPlatformStart(record interface{}) string {
+	recordMap, ok := record.(map[string]interface{})
+	if !ok {
+		return formatRecord(record)
+	}
+	
+	requestID, _ := recordMap["requestId"].(string)
+	version, _ := recordMap["version"].(string)
+	
+	if requestID != "" && version != "" {
+		return fmt.Sprintf("START RequestId: %s Version: %s", requestID, version)
+	}
+	return formatRecord(record)
+}
+
+// formatPlatformRuntimeDone formats platform.runtimeDone event
+func formatPlatformRuntimeDone(record interface{}) string {
+	// Just return as JSON for now - these don't appear in CloudWatch
+	return formatRecord(record)
+}
+
+// formatPlatformReport formats platform.report event as Lambda REPORT message
+func formatPlatformReport(record interface{}) string {
+	recordMap, ok := record.(map[string]interface{})
+	if !ok {
+		return formatRecord(record)
+	}
+	
+	// Extract metrics from the report
+	requestID, _ := recordMap["requestId"].(string)
+	
+	metrics, ok := recordMap["metrics"].(map[string]interface{})
+	if !ok || requestID == "" {
+		return formatRecord(record)
+	}
+	
+	duration, _ := metrics["durationMs"].(float64)
+	billedDuration, _ := metrics["billedDurationMs"].(float64)
+	memorySize, _ := metrics["memorySizeMB"].(float64)
+	maxMemoryUsed, _ := metrics["maxMemoryUsedMB"].(float64)
+	initDuration, _ := metrics["initDurationMs"].(float64)
+	
+	msg := fmt.Sprintf("REPORT RequestId: %s\tDuration: %.2f ms\tBilled Duration: %.0f ms\tMemory Size: %.0f MB\tMax Memory Used: %.0f MB",
+		requestID, duration, billedDuration, memorySize, maxMemoryUsed)
+	
+	if initDuration > 0 {
+		msg += fmt.Sprintf("\tInit Duration: %.2f ms", initDuration)
+	}
+	
 	return msg
 }
 

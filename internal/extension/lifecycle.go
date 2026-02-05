@@ -69,6 +69,11 @@ func NewManager(cfg *config.Config) *Manager {
 		intervalChange: make(chan struct{}, 1),
 	}
 	m.state.Store(int32(StateIdle))
+	
+	// Set buffer in logger so extension logs go to both stdout and buffer
+	// Telemetry API won't capture our own extension logs, so we add them directly
+	logger.SetBuffer(m.buffer)
+	
 	return m
 }
 
@@ -250,6 +255,8 @@ func (m *Manager) shouldFlush() bool {
 // onRuntimeDone is called when platform.runtimeDone is received
 // This triggers a critical flush to ensure all logs are shipped at invocation end
 func (m *Manager) onRuntimeDone(requestID string) {
+	logger.Infof("Received PLATFORM_RUNTIME_DONE event for request: %s", requestID)
+	
 	// Transition to flushing state
 	m.setState(StateFlushing)
 
@@ -341,6 +348,9 @@ func (m *Manager) shutdown(ctx context.Context) error {
 	if err := m.telemetryServer.Shutdown(shutdownCtx); err != nil {
 		logger.Infof("Error shutting down telemetry server: %v", err)
 	}
+
+	// Give telemetry API a moment to deliver any final logs
+	time.Sleep(100 * time.Millisecond)
 
 	// Drain and flush all remaining logs with critical retries
 	logger.Infof("Draining buffer...")

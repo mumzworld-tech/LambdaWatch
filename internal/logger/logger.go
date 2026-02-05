@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
 )
 
 var (
 	appName     string
 	environment string
+	logBuffer   *buffer.Buffer
 )
 
 func Init() {
@@ -21,6 +24,12 @@ func Init() {
 	if environment == "" {
 		environment = "unknown"
 	}
+}
+
+// SetBuffer sets the buffer for extension logs to be written directly
+// This is necessary because Telemetry API doesn't capture logs from the same extension
+func SetBuffer(buf *buffer.Buffer) {
+	logBuffer = buf
 }
 
 type logEntry struct {
@@ -42,7 +51,21 @@ func log(level, msg string) {
 		Message:     msg,
 	}
 	b, _ := json.Marshal(entry)
-	fmt.Println(string(b))
+	logLine := string(b)
+
+	// Always write to stdout for CloudWatch
+	fmt.Println(logLine)
+
+	// Also write directly to buffer for Loki (Telemetry API won't capture our own logs)
+	if logBuffer != nil {
+		logBuffer.Add(buffer.LogEntry{
+			Timestamp: time.Now().UnixNano() / int64(time.Millisecond),
+			Message:   logLine,
+			Type:      "extension",
+		})
+		// Signal that logs are ready for flushing
+		logBuffer.SignalReady()
+	}
 }
 
 func Info(msg string)                   { log("info", msg) }
