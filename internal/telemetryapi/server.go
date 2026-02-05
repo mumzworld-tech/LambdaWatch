@@ -104,14 +104,31 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 					s.currentRequestID = reqID
 				}
 			}
+			// Ship platform.start log
+			ts := parseTimestamp(event.Time)
+			entry := buffer.LogEntry{
+				Timestamp: ts,
+				Message:   formatRecord(event.Record),
+				Type:      event.Type,
+				RequestID: s.currentRequestID,
+			}
+			entries = append(entries, entry)
 
 		case EventTypePlatformRuntimeDone:
-			// Mark for critical flush after entries are added
+			// Extract request ID and ship log
 			if record, ok := event.Record.(map[string]interface{}); ok {
 				if id, ok := record["requestId"].(string); ok {
 					runtimeDoneRequestID = id
 				}
 			}
+			ts := parseTimestamp(event.Time)
+			entry := buffer.LogEntry{
+				Timestamp: ts,
+				Message:   formatRecord(event.Record),
+				Type:      event.Type,
+				RequestID: s.currentRequestID,
+			}
+			entries = append(entries, entry)
 
 		case EventTypeFunction, EventTypeExtension:
 			// Process function and extension logs
@@ -147,7 +164,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case EventTypePlatformReport:
-			// Optionally log platform report as a log entry
+			// Log platform report
 			ts := parseTimestamp(event.Time)
 			message := formatRecord(event.Record)
 			entry := buffer.LogEntry{
