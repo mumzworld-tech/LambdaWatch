@@ -2,25 +2,27 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/Sami-AlEsh/lambdawatch/internal/config"
 	"github.com/Sami-AlEsh/lambdawatch/internal/extension"
+	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
 )
 
 func main() {
+	logger.Init()
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		logger.Fatalf("Failed to load config: %v", err)
 	}
 
 	// Validate required config
 	if cfg.LokiEndpoint == "" {
-		log.Fatal("LOKI_ENDPOINT environment variable is required")
+		logger.Fatal("G_LOKI_ENDPOINT environment variable is required")
 	}
 
 	// Setup context with signal handling
@@ -32,13 +34,13 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		sig := <-sigChan
-		log.Printf("Received signal: %v", sig)
+		logger.Infof("Received signal: %v", sig)
 		cancel()
 	}()
 
 	// Create and run the extension
 	mgr := extension.NewManager(cfg)
 	if err := mgr.Run(ctx); err != nil {
-		log.Fatalf("Extension error: %v", err)
+		logger.Fatalf("Extension error: %v", err)
 	}
 }

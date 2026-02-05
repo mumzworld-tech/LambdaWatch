@@ -55,6 +55,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 - **Automatic batching** — Efficiently groups logs to minimize API calls
 - **Gzip compression** — Reduces payload size by ~80%
 - **Guaranteed delivery** — Critical flush on invocation end ensures no logs are lost
+- **Clean JSON extraction** — Strips Lambda log prefixes, sends pure JSON to Loki
 
 ### Reliability
 - **Two-tier retry system** — 5 retries for critical flushes, 3 for regular
@@ -69,6 +70,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 - **~6MB binary** — Minimal cold start impact
 
 ### Observability
+- **Structured extension logs** — Extension logs use same JSON format as your application
 - **Request ID extraction** — Automatic `request_id` label for request tracing
 - **Auto-labeling** — Adds `function_name`, `function_version`, `region`
 - **Custom labels** — Add your own labels via JSON config
@@ -217,6 +219,32 @@ Every log entry includes these labels automatically:
 
 # JSON parsing (if your logs are JSON)
 {function_name="my-function"} | json | level="error"
+```
+
+### Structured Extension Logs
+
+LambdaWatch extension logs are output in the same JSON structure as your application logs for consistent parsing in Grafana:
+
+```json
+{
+  "level": "info",
+  "timestamp": "2026-02-05T08:24:18.000Z",
+  "app_name": "my-service",
+  "environment": "production",
+  "context": "LambdaWatch",
+  "message": "Registered extension for function: my-function"
+}
+```
+
+The extension uses `APP_NAME` environment variable for `app_name` field, falling back to `SERVICE_NAME` if not set. The `environment` field is populated from `NODE_ENV`.
+
+To filter extension logs vs application logs in Grafana:
+```logql
+# Extension logs only
+{service_name="my-service"} | json | context="LambdaWatch"
+
+# Application logs only (exclude extension)
+{service_name="my-service"} | json | context!="LambdaWatch"
 ```
 
 ---

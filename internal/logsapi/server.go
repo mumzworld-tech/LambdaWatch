@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
+	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
 )
 
 // Server is an HTTP server that receives logs from Lambda
@@ -41,10 +41,10 @@ func NewServer(buf *buffer.Buffer, port int, maxLineSize int) *Server {
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
-	log.Printf("Starting log receiver on port %d", s.port)
+	logger.Infof("Starting log receiver on port %d", s.port)
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("Log server error: %v", err)
+			logger.Infof("Log server error: %v", err)
 		}
 	}()
 	return nil
@@ -68,7 +68,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("Failed to read log body: %v", err)
+		logger.Infof("Failed to read log body: %v", err)
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
@@ -76,7 +76,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 
 	var messages []LogMessage
 	if err := json.Unmarshal(body, &messages); err != nil {
-		log.Printf("Failed to parse log messages: %v", err)
+		logger.Infof("Failed to parse log messages: %v", err)
 		http.Error(w, "Failed to parse logs", http.StatusBadRequest)
 		return
 	}

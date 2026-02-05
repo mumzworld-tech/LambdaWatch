@@ -2,7 +2,6 @@ package extension
 
 import (
 	"context"
-	"log"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
 	"github.com/Sami-AlEsh/lambdawatch/internal/config"
+	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
 	"github.com/Sami-AlEsh/lambdawatch/internal/loki"
 	"github.com/Sami-AlEsh/lambdawatch/internal/telemetryapi"
 )
@@ -93,7 +93,7 @@ func (m *Manager) init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Registered extension for function: %s", regResp.FunctionName)
+	logger.Infof("Registered extension for function: %s", regResp.FunctionName)
 
 	// Build labels from config and Lambda environment
 	m.labels = m.buildLabels(regResp)
@@ -118,7 +118,7 @@ func (m *Manager) init(ctx context.Context) error {
 	if err := m.telemetryClient.Subscribe(ctx, m.telemetryServer.ListenerURI()); err != nil {
 		return err
 	}
-	log.Printf("Subscribed to Telemetry API")
+	logger.Infof("Subscribed to Telemetry API")
 
 	return nil
 }
@@ -158,10 +158,10 @@ func (m *Manager) eventLoop(ctx context.Context) error {
 		switch event.EventType {
 		case Invoke:
 			m.setState(StateActive)
-			log.Printf("Received INVOKE event for request: %s (state: ACTIVE)", event.RequestID)
+			logger.Infof("Received INVOKE event for request: %s (state: ACTIVE)", event.RequestID)
 
 		case Shutdown:
-			log.Printf("Received SHUTDOWN event, reason: %s", event.ShutdownReason)
+			logger.Infof("Received SHUTDOWN event, reason: %s", event.ShutdownReason)
 			return m.shutdown(ctx)
 		}
 	}
@@ -171,7 +171,7 @@ func (m *Manager) eventLoop(ctx context.Context) error {
 func (m *Manager) setState(newState State) {
 	oldState := State(m.state.Swap(int32(newState)))
 	if oldState != newState {
-		log.Printf("State transition: %s -> %s", oldState, newState)
+		logger.Infof("State transition: %s -> %s", oldState, newState)
 		// Signal flush loop to recalculate interval
 		select {
 		case m.intervalChange <- struct{}{}:
@@ -209,7 +209,7 @@ func (m *Manager) flushLoop(ctx context.Context) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	log.Printf("Flush loop started with interval: %v (state: %s)", interval, m.getState())
+	logger.Infof("Flush loop started with interval: %v (state: %s)", interval, m.getState())
 
 	for {
 		select {
@@ -223,7 +223,7 @@ func (m *Manager) flushLoop(ctx context.Context) {
 			if newInterval != interval {
 				interval = newInterval
 				ticker.Reset(interval)
-				log.Printf("Flush interval adjusted to: %v (state: %s)", interval, m.getState())
+				logger.Infof("Flush interval adjusted to: %v (state: %s)", interval, m.getState())
 			}
 		case <-ticker.C:
 			m.flush(ctx, false)
@@ -286,7 +286,7 @@ func (m *Manager) flush(ctx context.Context, isCritical bool) {
 
 	pushReq := batch.ToPushRequest()
 
-	log.Printf("Pushing %d log entries to Loki", len(entries))
+	logger.Infof("Pushing %d log entries to Loki", len(entries))
 
 	var err error
 	if isCritical {
@@ -296,7 +296,7 @@ func (m *Manager) flush(ctx context.Context, isCritical bool) {
 	}
 
 	if err != nil {
-		log.Printf("Failed to push logs to Loki: %v", err)
+		logger.Infof("Failed to push logs to Loki: %v", err)
 	}
 }
 
@@ -319,9 +319,9 @@ func (m *Manager) criticalFlush(ctx context.Context) {
 		batch.Add(entries)
 
 		pushReq := batch.ToPushRequest()
-		log.Printf("Pushing %d log entries to Loki (critical)", len(entries))
+		logger.Infof("Pushing %d log entries to Loki (critical)", len(entries))
 		if err := m.lokiClient.PushCritical(ctx, pushReq); err != nil {
-			log.Printf("Critical flush failed: %v", err)
+			logger.Infof("Critical flush failed: %v", err)
 		}
 	}
 }
@@ -331,7 +331,7 @@ func (m *Manager) shutdown(ctx context.Context) error {
 	close(m.stopFlush)
 
 	// Wait for any pending critical flushes to complete
-	log.Printf("Waiting for pending critical flushes...")
+	logger.Infof("Waiting for pending critical flushes...")
 	m.criticalFlushWg.Wait()
 
 	// Shutdown telemetry server
@@ -339,25 +339,25 @@ func (m *Manager) shutdown(ctx context.Context) error {
 	defer cancel()
 
 	if err := m.telemetryServer.Shutdown(shutdownCtx); err != nil {
-		log.Printf("Error shutting down telemetry server: %v", err)
+		logger.Infof("Error shutting down telemetry server: %v", err)
 	}
 
 	// Drain and flush all remaining logs with critical retries
-	log.Printf("Draining buffer...")
+	logger.Infof("Draining buffer...")
 	entries := m.buffer.Drain()
 
 	if len(entries) > 0 {
-		log.Printf("Flushing %d remaining log entries with critical retries", len(entries))
+		logger.Infof("Flushing %d remaining log entries with critical retries", len(entries))
 		batch := loki.NewBatch(m.labels, m.cfg.ExtractRequestID)
 		batch.Add(entries)
 
 		pushReq := batch.ToPushRequest()
 		if err := m.lokiClient.PushCritical(ctx, pushReq); err != nil {
-			log.Printf("Failed to push final logs to Loki: %v", err)
+			logger.Infof("Failed to push final logs to Loki: %v", err)
 			// Continue shutdown even on error
 		}
 	}
 
-	log.Printf("Shutdown complete")
+	logger.Infof("Shutdown complete")
 	return nil
 }

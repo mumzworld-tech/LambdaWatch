@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"regexp"
 	"time"
 
 	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
+	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
 )
 
 var requestIDRegex = regexp.MustCompile(`(?i)RequestId:\s*([a-f0-9-]+)`)
@@ -52,10 +52,10 @@ func NewServer(buf *buffer.Buffer, port int, maxLineSize int, extractRequestID b
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
-	log.Printf("Starting telemetry receiver on port %d", s.port)
+	logger.Infof("Starting telemetry receiver on port %d", s.port)
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("Telemetry server error: %v", err)
+			logger.Infof("Telemetry server error: %v", err)
 		}
 	}()
 	return nil
@@ -79,7 +79,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("Failed to read telemetry body: %v", err)
+		logger.Infof("Failed to read telemetry body: %v", err)
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
@@ -87,7 +87,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 
 	var events []TelemetryEvent
 	if err := json.Unmarshal(body, &events); err != nil {
-		log.Printf("Failed to parse telemetry events: %v", err)
+		logger.Infof("Failed to parse telemetry events: %v", err)
 		http.Error(w, "Failed to parse events", http.StatusBadRequest)
 		return
 	}
@@ -181,16 +181,31 @@ func parseTimestamp(timeStr string) int64 {
 }
 
 func formatRecord(record interface{}) string {
+	var msg string
 	switch v := record.(type) {
 	case string:
-		return v
+		msg = v
 	default:
 		b, err := json.Marshal(v)
 		if err != nil {
 			return fmt.Sprintf("%v", v)
 		}
-		return string(b)
+		msg = string(b)
 	}
+	// Strip Lambda log prefix: "2026-02-05T08:12:42.944Z\trequestId\tINFO\t"
+	if idx := findJSONStart(msg); idx > 0 {
+		return msg[idx:]
+	}
+	return msg
+}
+
+func findJSONStart(s string) int {
+	for i, c := range s {
+		if c == '{' || c == '[' {
+			return i
+		}
+	}
+	return 0
 }
 
 func extractRequestID(message string) string {
