@@ -16,6 +16,9 @@ import (
 
 var requestIDRegex = regexp.MustCompile(`(?i)RequestId:\s*([a-f0-9-]+)`)
 
+// Skip our own extension logs - they're already added to buffer by the logger
+const ownExtensionMarker = `"context":"LambdaWatch"`
+
 // RuntimeDoneHandler is called when platform.runtimeDone is received
 type RuntimeDoneHandler func(requestID string)
 
@@ -135,6 +138,11 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			// Process function and extension logs
 			message, ts := formatRecordWithTimestamp(event.Record, event.Time)
 
+			// Skip our own extension logs - they're already in buffer via logger
+			if event.Type == EventTypeExtension && strings.Contains(message, ownExtensionMarker) {
+				continue
+			}
+
 			// Extract request ID from message if enabled
 			requestID := s.currentRequestID
 			if s.extractRequestID && requestID == "" {
@@ -189,31 +197,13 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// parseTimestamp parses RFC3339Nano timestamp and returns milliseconds
 func parseTimestamp(timeStr string) int64 {
 	t, err := time.Parse(time.RFC3339Nano, timeStr)
 	if err != nil {
-		return time.Now().UnixNano()
+		return time.Now().UnixMilli()
 	}
-	return t.UnixNano()
-}
-
-func formatRecord(record interface{}) string {
-	var msg string
-	switch v := record.(type) {
-	case string:
-		msg = v
-	default:
-		b, err := json.Marshal(v)
-		if err != nil {
-			return fmt.Sprintf("%v", v)
-		}
-		msg = string(b)
-	}
-	// Strip Lambda log prefix: "2026-02-05T08:12:42.944Z\trequestId\tINFO\t"
-	if idx := findJSONStart(msg); idx > 0 {
-		return msg[idx:]
-	}
-	return msg
+	return t.UnixMilli()
 }
 
 // formatRecordWithTimestamp extracts timestamp from Lambda prefix and returns cleaned message
@@ -247,37 +237,37 @@ func formatRecordWithTimestamp(record interface{}, fallbackTime string) (string,
 func formatPlatformStart(record interface{}) string {
 	recordMap, ok := record.(map[string]interface{})
 	if !ok {
-		return formatRecord(record)
+		return formatAsJSON(record)
 	}
-	
+
 	requestID, _ := recordMap["requestId"].(string)
 	version, _ := recordMap["version"].(string)
-	
+
 	if requestID != "" && version != "" {
 		return fmt.Sprintf("START RequestId: %s Version: %s", requestID, version)
 	}
-	return formatRecord(record)
+	return formatAsJSON(record)
 }
 
 // formatPlatformRuntimeDone formats platform.runtimeDone event
 func formatPlatformRuntimeDone(record interface{}) string {
 	// Just return as JSON for now - these don't appear in CloudWatch
-	return formatRecord(record)
+	return formatAsJSON(record)
 }
 
 // formatPlatformReport formats platform.report event as Lambda REPORT message
 func formatPlatformReport(record interface{}) string {
 	recordMap, ok := record.(map[string]interface{})
 	if !ok {
-		return formatRecord(record)
+		return formatAsJSON(record)
 	}
-	
+
 	// Extract metrics from the report
 	requestID, _ := recordMap["requestId"].(string)
-	
+
 	metrics, ok := recordMap["metrics"].(map[string]interface{})
 	if !ok || requestID == "" {
-		return formatRecord(record)
+		return formatAsJSON(record)
 	}
 	
 	duration, _ := metrics["durationMs"].(float64)
@@ -303,6 +293,15 @@ func findJSONStart(s string) int {
 		}
 	}
 	return 0
+}
+
+// formatAsJSON converts a record to JSON string
+func formatAsJSON(record interface{}) string {
+	b, err := json.Marshal(record)
+	if err != nil {
+		return fmt.Sprintf("%v", record)
+	}
+	return string(b)
 }
 
 func extractRequestID(message string) string {

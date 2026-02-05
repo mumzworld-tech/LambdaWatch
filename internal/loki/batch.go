@@ -109,8 +109,3 @@ func (b *Batch) toGroupedStreamRequest() *PushRequest {
 
 	return &PushRequest{Streams: streams}
 }
-
-// Clear empties the batch
-func (b *Batch) Clear() {
-	b.entries = b.entries[:0]
-}

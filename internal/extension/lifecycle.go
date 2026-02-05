@@ -14,7 +14,14 @@ import (
 	"github.com/Sami-AlEsh/lambdawatch/internal/telemetryapi"
 )
 
-const telemetryServerPort = 8080
+const (
+	telemetryServerPort = 8080
+
+	// Timeouts and intervals
+	criticalFlushTimeout  = 10 * time.Second
+	shutdownTimeout       = 2 * time.Second
+	finalDeliveryWait     = 100 * time.Millisecond
+)
 
 // State represents the extension's current operational state
 type State int32
@@ -54,10 +61,14 @@ type Manager struct {
 
 	// Critical flush synchronization
 	criticalFlushMu sync.Mutex
-	criticalFlushWg sync.WaitGroup
 
 	// Channel to signal interval changes
 	intervalChange chan struct{}
+
+	// Channel to signal when runtimeDone processing is complete
+	// Created fresh for each invocation to avoid race conditions
+	invocationDone chan struct{}
+	invocationMu   sync.Mutex
 }
 
 // NewManager creates a new lifecycle manager
@@ -152,9 +163,6 @@ func (m *Manager) buildLabels(regResp *RegisterResponse) map[string]string {
 
 func (m *Manager) eventLoop(ctx context.Context) error {
 	for {
-		// Wait for any pending critical flushes before blocking on NextEvent
-		m.criticalFlushWg.Wait()
-
 		event, err := m.extClient.NextEvent(ctx)
 		if err != nil {
 			return err
@@ -162,8 +170,22 @@ func (m *Manager) eventLoop(ctx context.Context) error {
 
 		switch event.EventType {
 		case Invoke:
+			// Create a new channel to wait for this invocation's runtimeDone
+			m.invocationMu.Lock()
+			m.invocationDone = make(chan struct{})
+			m.invocationMu.Unlock()
+
 			m.setState(StateActive)
 			logger.Infof("Received INVOKE event for request: %s (state: ACTIVE)", event.RequestID)
+
+			// Wait for runtimeDone to be processed before calling NextEvent again
+			// This ensures critical flush completes before we signal readiness for next invocation
+			select {
+			case <-m.invocationDone:
+				logger.Infof("Invocation complete, ready for next event")
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 
 		case Shutdown:
 			logger.Infof("Received SHUTDOWN event, reason: %s", event.ShutdownReason)
@@ -256,27 +278,28 @@ func (m *Manager) shouldFlush() bool {
 // This triggers a critical flush to ensure all logs are shipped at invocation end
 func (m *Manager) onRuntimeDone(requestID string) {
 	logger.Infof("Received PLATFORM_RUNTIME_DONE event for request: %s", requestID)
-	
+
 	// Transition to flushing state
 	m.setState(StateFlushing)
 
-	// Run in goroutine to not block telemetry API response
-	m.criticalFlushWg.Add(1)
-	go func() {
-		defer m.criticalFlushWg.Done()
-		// Use a timeout context for critical flush
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		m.criticalFlush(ctx)
-		m.setState(StateIdle)
-	}()
+	// Perform critical flush with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), criticalFlushTimeout)
+	defer cancel()
+	m.criticalFlush(ctx)
+	m.setState(StateIdle)
+
+	// Signal that invocation processing is complete
+	m.invocationMu.Lock()
+	if m.invocationDone != nil {
+		close(m.invocationDone)
+		m.invocationDone = nil
+	}
+	m.invocationMu.Unlock()
 }
 
-// flush performs a regular flush with standard retries
-func (m *Manager) flush(ctx context.Context, isCritical bool) {
-	m.criticalFlushMu.Lock()
-	defer m.criticalFlushMu.Unlock()
-
+// flushBatch extracts a batch of entries from the buffer and returns a push request
+// Returns nil if no entries are available
+func (m *Manager) flushBatch() (*loki.PushRequest, int) {
 	var entries []buffer.LogEntry
 	if m.cfg.MaxBatchSizeBytes > 0 {
 		entries = m.buffer.FlushBySize(m.cfg.BatchSize, m.cfg.MaxBatchSizeBytes)
@@ -285,15 +308,26 @@ func (m *Manager) flush(ctx context.Context, isCritical bool) {
 	}
 
 	if len(entries) == 0 {
-		return
+		return nil, 0
 	}
 
 	batch := loki.NewBatch(m.labels, m.cfg.ExtractRequestID)
 	batch.Add(entries)
 
-	pushReq := batch.ToPushRequest()
+	return batch.ToPushRequest(), len(entries)
+}
 
-	logger.Infof("Pushing %d log entries to Loki", len(entries))
+// flush performs a regular flush with standard retries
+func (m *Manager) flush(ctx context.Context, isCritical bool) {
+	m.criticalFlushMu.Lock()
+	defer m.criticalFlushMu.Unlock()
+
+	pushReq, count := m.flushBatch()
+	if pushReq == nil {
+		return
+	}
+
+	logger.Infof("Pushing %d log entries to Loki", count)
 
 	var err error
 	if isCritical {
@@ -303,32 +337,34 @@ func (m *Manager) flush(ctx context.Context, isCritical bool) {
 	}
 
 	if err != nil {
-		logger.Infof("Failed to push logs to Loki: %v", err)
+		logger.Errorf("Failed to push logs to Loki: %v", err)
 	}
 }
 
 // criticalFlush flushes all buffered logs with higher retry count
 func (m *Manager) criticalFlush(ctx context.Context) {
-	// Flush all remaining entries
-	for m.buffer.Len() > 0 {
-		var entries []buffer.LogEntry
-		if m.cfg.MaxBatchSizeBytes > 0 {
-			entries = m.buffer.FlushBySize(m.cfg.BatchSize, m.cfg.MaxBatchSizeBytes)
-		} else {
-			entries = m.buffer.Flush(m.cfg.BatchSize)
-		}
+	m.criticalFlushMu.Lock()
+	defer m.criticalFlushMu.Unlock()
 
-		if len(entries) == 0 {
+	// Snapshot count before any logging to avoid infinite loop
+	remaining := m.buffer.Len()
+	if remaining == 0 {
+		return
+	}
+
+	logger.Infof("Critical flush: %d entries", remaining)
+
+	// Flush only the entries that existed when we started
+	for remaining > 0 {
+		pushReq, n := m.flushBatch()
+		if pushReq == nil {
 			break
 		}
 
-		batch := loki.NewBatch(m.labels, m.cfg.ExtractRequestID)
-		batch.Add(entries)
-
-		pushReq := batch.ToPushRequest()
-		logger.Infof("Pushing %d log entries to Loki (critical)", len(entries))
+		remaining -= n
 		if err := m.lokiClient.PushCritical(ctx, pushReq); err != nil {
-			logger.Infof("Critical flush failed: %v", err)
+			logger.Errorf("Critical flush error: %v", err)
+			break
 		}
 	}
 }
@@ -337,20 +373,16 @@ func (m *Manager) shutdown(ctx context.Context) error {
 	// Stop the flush loop
 	close(m.stopFlush)
 
-	// Wait for any pending critical flushes to complete
-	logger.Infof("Waiting for pending critical flushes...")
-	m.criticalFlushWg.Wait()
-
 	// Shutdown telemetry server
-	shutdownCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 
 	if err := m.telemetryServer.Shutdown(shutdownCtx); err != nil {
-		logger.Infof("Error shutting down telemetry server: %v", err)
+		logger.Errorf("Error shutting down telemetry server: %v", err)
 	}
 
 	// Give telemetry API a moment to deliver any final logs
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(finalDeliveryWait)
 
 	// Drain and flush all remaining logs with critical retries
 	logger.Infof("Draining buffer...")
@@ -363,7 +395,7 @@ func (m *Manager) shutdown(ctx context.Context) error {
 
 		pushReq := batch.ToPushRequest()
 		if err := m.lokiClient.PushCritical(ctx, pushReq); err != nil {
-			logger.Infof("Failed to push final logs to Loki: %v", err)
+			logger.Errorf("Failed to push final logs to Loki: %v", err)
 			// Continue shutdown even on error
 		}
 	}

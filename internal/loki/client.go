@@ -14,6 +14,11 @@ import (
 	"github.com/Sami-AlEsh/lambdawatch/internal/config"
 )
 
+const (
+	httpClientTimeout = 10 * time.Second
+	baseBackoffDelay  = 100 * time.Millisecond
+)
+
 // Client is a Loki HTTP client
 type Client struct {
 	endpoint             string
@@ -32,7 +37,7 @@ type Client struct {
 func NewClient(cfg *config.Config) *Client {
 	return &Client{
 		endpoint:             cfg.LokiEndpoint,
-		httpClient:           &http.Client{Timeout: 10 * time.Second},
+		httpClient:           &http.Client{Timeout: httpClientTimeout},
 		username:             cfg.LokiUsername,
 		password:             cfg.LokiPassword,
 		apiKey:               cfg.LokiAPIKey,
@@ -104,7 +109,7 @@ func (c *Client) pushWithRetry(ctx context.Context, body io.Reader, contentEncod
 	for attempt := 0; attempt <= retries; attempt++ {
 		if attempt > 0 {
 			// Exponential backoff: 100ms, 200ms, 400ms, ...
-			backoff := time.Duration(math.Pow(2, float64(attempt-1))) * 100 * time.Millisecond
+			backoff := time.Duration(math.Pow(2, float64(attempt-1))) * baseBackoffDelay
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
