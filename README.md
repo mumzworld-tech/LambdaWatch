@@ -84,45 +84,122 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 
 ## Installation
 
-### Option 1: Pre-built Layer (Recommended)
+### Step 1: Build the Extension
 
-Download the latest release and publish as a Lambda Layer:
+Clone the repository and build for your Lambda architecture:
 
 ```bash
-# Download the layer zip
-curl -LO https://github.com/Sami-AlEsh/lambdawatch/releases/latest/download/lambdawatch-layer-arm64.zip
-
-# Publish the layer
-aws lambda publish-layer-version \
-  --layer-name lambdawatch \
-  --zip-file fileb://lambdawatch-layer-arm64.zip \
-  --compatible-architectures arm64 \
-  --compatible-runtimes provided.al2023 provided.al2
+git clone https://github.com/Sami-AlEsh/lambdawatch.git
+cd lambdawatch
 ```
 
-Then attach to your function:
+**For ARM64 (Graviton) - Recommended for cost savings:**
+```bash
+make package
+```
+
+**For x86_64 (Intel/AMD):**
+```bash
+make package-amd64
+```
+
+This creates a zip file in the `build/` directory.
+
+### Step 2: Publish as Lambda Layer
+
+```bash
+# For ARM64
+aws lambda publish-layer-version \
+  --layer-name lambdawatch \
+  --zip-file fileb://build/lambdawatch-layer-arm64.zip \
+  --compatible-architectures arm64 \
+  --compatible-runtimes provided.al2023 provided.al2 nodejs20.x nodejs18.x python3.12 python3.11
+
+# For x86_64
+aws lambda publish-layer-version \
+  --layer-name lambdawatch \
+  --zip-file fileb://build/lambdawatch-layer-amd64.zip \
+  --compatible-architectures x86_64 \
+  --compatible-runtimes provided.al2023 provided.al2 nodejs20.x nodejs18.x python3.12 python3.11
+```
+
+Note the layer ARN from the output (e.g., `arn:aws:lambda:us-east-1:123456789:layer:lambdawatch:1`).
+
+### Step 3: Attach Layer to Your Lambda Function
 
 ```bash
 aws lambda update-function-configuration \
-  --function-name YOUR_FUNCTION \
-  --layers arn:aws:lambda:REGION:ACCOUNT:layer:lambdawatch:VERSION
+  --function-name YOUR_FUNCTION_NAME \
+  --layers arn:aws:lambda:REGION:ACCOUNT_ID:layer:lambdawatch:VERSION
 ```
 
-### Option 2: Build from Source
+### Step 4: Configure Environment Variables
+
+Set the required environment variables on your Lambda function:
 
 ```bash
-# Clone the repository
-git clone https://github.com/Sami-AlEsh/lambdawatch.git
-cd lambdawatch
+aws lambda update-function-configuration \
+  --function-name YOUR_FUNCTION_NAME \
+  --environment "Variables={
+    LOKI_URL=https://your-loki-instance.com/loki/api/v1/push,
+    LOKI_USERNAME=your-username,
+    LOKI_PASSWORD=your-password,
+    SERVICE_NAME=your-service-name
+  }"
+```
 
-# Build for ARM64 (Graviton)
-make build-arm64
+**Required Variables:**
+| Variable | Description |
+|----------|-------------|
+| `LOKI_URL` | Your Loki push endpoint URL |
 
-# Or for x86_64
-make build-amd64
+**Recommended Variables:**
+| Variable | Description |
+|----------|-------------|
+| `SERVICE_NAME` | Service identifier for grouping logs from multiple functions |
+| `LOKI_USERNAME` | Basic auth username (if your Loki requires auth) |
+| `LOKI_PASSWORD` | Basic auth password |
 
-# Package as Lambda Layer
+**Or use Bearer token auth:**
+| Variable | Description |
+|----------|-------------|
+| `LOKI_API_KEY` | Bearer token for authentication |
+| `LOKI_TENANT_ID` | Multi-tenant org ID (for Grafana Cloud) |
+
+### Quick Start Example
+
+Complete setup for a function called `my-api`:
+
+```bash
+# 1. Build and package
 make package
+
+# 2. Publish layer
+LAYER_ARN=$(aws lambda publish-layer-version \
+  --layer-name lambdawatch \
+  --zip-file fileb://build/lambdawatch-layer-arm64.zip \
+  --compatible-architectures arm64 \
+  --query 'LayerVersionArn' \
+  --output text)
+
+# 3. Attach layer and configure
+aws lambda update-function-configuration \
+  --function-name my-api \
+  --layers $LAYER_ARN \
+  --environment "Variables={
+    LOKI_URL=https://logs-prod-123.grafana.net/loki/api/v1/push,
+    LOKI_USERNAME=123456,
+    LOKI_PASSWORD=glc_xxxxxxxxxxxx,
+    SERVICE_NAME=my-api-service
+  }"
+```
+
+### Alternative: Pre-built Layer
+
+Download the latest release from GitHub:
+
+```bash
+curl -LO https://github.com/Sami-AlEsh/lambdawatch/releases/latest/download/lambdawatch-layer-arm64.zip
 ```
 
 ---
