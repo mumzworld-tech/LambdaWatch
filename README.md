@@ -32,10 +32,10 @@
 No code changes required. Just add the layer and configure your Loki endpoint.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     AWS Lambda                               │
-│  ┌─────────────┐         ┌─────────────────────────────┐   │
-│  │   Your      │         │      LambdaWatch            │   │
+┌───────────────────────────────────────────────────────────┐
+│                     AWS Lambda                            │
+│  ┌─────────────┐         ┌────────────────────────────┐   │
+│  │   Your      │         │      LambdaWatch           │   │
 │  │  Function   │  logs   │  ┌─────┐ ┌─────┐ ┌──────┐  │   │
 │  │             │ ──────► │  │Batch│→│Gzip │→│ Push │  │   │
 │  │  console.log│         │  └─────┘ └─────┘ └──┬───┘  │   │
@@ -51,6 +51,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 ## Features
 
 ### Core
+
 - **Zero code changes** — Works as a Lambda Layer, no SDK required
 - **Automatic batching** — Efficiently groups logs to minimize API calls
 - **Gzip compression** — Reduces payload size by ~80%
@@ -58,18 +59,21 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 - **Clean JSON extraction** — Strips Lambda log prefixes, sends pure JSON to Loki
 
 ### Reliability
+
 - **Two-tier retry system** — 5 retries for critical flushes, 3 for regular
 - **Exponential backoff** — Intelligent retry delays on failures
 - **Graceful shutdown** — Drains all logs before container termination
 - **Bounded buffer** — Prevents memory overflow under high load
 
 ### Performance
+
 - **Adaptive flush intervals** — 3x longer intervals when idle (cost optimization)
 - **Byte-size limits** — Prevents oversized payloads to Loki
 - **Compression threshold** — Skips gzip for small payloads (<1KB)
 - **~6MB binary** — Minimal cold start impact
 
 ### Observability
+
 - **Structured extension logs** — Extension logs use same JSON format as your application
 - **Request ID extraction** — Automatic `request_id` label for request tracing
 - **Auto-labeling** — Adds `function_name`, `function_version`, `region`
@@ -131,7 +135,7 @@ Configure via environment variables on your Lambda function:
 
 | Variable | Description |
 |----------|-------------|
-| `LOKI_ENDPOINT` | Loki push URL (e.g., `https://loki.example.com/loki/api/v1/push`) |
+| `LOKI_URL` | Loki push URL (e.g., `https://loki.example.com/loki/api/v1/push`) |
 
 ### Authentication
 
@@ -175,7 +179,7 @@ Configure via environment variables on your Lambda function:
 aws lambda update-function-configuration \
   --function-name my-function \
   --environment "Variables={
-    LOKI_ENDPOINT=https://loki.example.com/loki/api/v1/push,
+    LOKI_URL=https://loki.example.com/loki/api/v1/push,
     LOKI_USERNAME=myuser,
     LOKI_PASSWORD=mypassword,
     LOKI_LABELS={\"env\":\"production\",\"team\":\"backend\"}
@@ -253,11 +257,11 @@ To filter extension logs vs application logs in Grafana:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    Lambda Execution Environment                      │
-│                                                                      │
+│                    Lambda Execution Environment                     │
+│                                                                     │
 │  ┌──────────────┐         ┌──────────────────────────────────────┐  │
-│  │   Lambda     │         │           LambdaWatch                 │  │
-│  │   Function   │         │                                       │  │
+│  │   Lambda     │         │           LambdaWatch                │  │
+│  │   Function   │         │                                      │  │
 │  └──────┬───────┘         │  ┌─────────┐    ┌──────────────────┐ │  │
 │         │                 │  │Telemetry│    │    Lifecycle     │ │  │
 │         │                 │  │ Server  │───►│    Manager       │ │  │

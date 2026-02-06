@@ -22,7 +22,7 @@ func main() {
 
 	// Validate required config
 	if cfg.LokiEndpoint == "" {
-		logger.Fatal("G_LOKI_ENDPOINT environment variable is required")
+		logger.Fatal("LOKI_URL environment variable is required")
 	}
 
 	// Setup context with signal handling

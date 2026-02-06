@@ -43,9 +43,9 @@ type Config struct {
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		LokiEndpoint:         os.Getenv("G_LOKI_ENDPOINT"),
-		LokiUsername:         os.Getenv("G_LOKI_USERNAME"),
-		LokiPassword:         os.Getenv("G_LOKI_PASSWORD"),
+		LokiEndpoint:         os.Getenv("LOKI_URL"),
+		LokiUsername:         os.Getenv("LOKI_USERNAME"),
+		LokiPassword:         os.Getenv("LOKI_PASSWORD"),
 		LokiAPIKey:           os.Getenv("LOKI_API_KEY"),
 		LokiTenantID:         os.Getenv("LOKI_TENANT_ID"),
 		BatchSize:            getEnvInt("LOKI_BATCH_SIZE", 100),
