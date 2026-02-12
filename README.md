@@ -421,6 +421,28 @@ LambdaWatch uses adaptive flush intervals based on invocation state:
 
 ## Development
 
+### Setup
+
+```bash
+# Clone and install git hooks (required once after cloning)
+git clone https://github.com/Sami-AlEsh/lambdawatch.git
+cd lambdawatch
+lefthook install
+```
+
+> **Note:** [Lefthook](https://github.com/evilmartians/lefthook) is required for git hooks. Install it via `brew install lefthook` (macOS) or `go install github.com/evilmartians/lefthook@latest`.
+
+### Git Hooks
+
+This project uses Lefthook to run the following checks automatically on every commit:
+
+- **`go fmt`** — Formats code and re-stages fixed files
+- **`golangci-lint`** — Runs linter to catch issues early
+
+These are configured in [`lefthook.yml`](lefthook.yml) and shared across the team.
+
+### Commands
+
 ```bash
 # Run tests
 make test
@@ -445,10 +467,12 @@ make build
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Install dependencies: `brew install lefthook golangci-lint`
+3. Set up git hooks: `lefthook install`
+4. Create your feature branch (`git checkout -b feature/amazing-feature`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ---
 

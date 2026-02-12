@@ -9,10 +9,10 @@ type LogMessage struct {
 
 // SubscribeRequest is the request body for subscribing to the Logs API
 type SubscribeRequest struct {
-	SchemaVersion string        `json:"schemaVersion"`
-	Types         []string      `json:"types"`
-	Buffering     BufferConfig  `json:"buffering"`
-	Destination   Destination   `json:"destination"`
+	SchemaVersion string       `json:"schemaVersion"`
+	Types         []string     `json:"types"`
+	Buffering     BufferConfig `json:"buffering"`
+	Destination   Destination  `json:"destination"`
 }
 
 // BufferConfig configures log buffering

@@ -68,11 +68,11 @@ func log(level, msg string) {
 	}
 }
 
-func Info(msg string)                   { log("info", msg) }
-func Debug(msg string)                  { log("debug", msg) }
-func Error(msg string)                  { log("error", msg) }
-func Infof(format string, a ...any)     { log("info", fmt.Sprintf(format, a...)) }
-func Debugf(format string, a ...any)    { log("debug", fmt.Sprintf(format, a...)) }
-func Errorf(format string, a ...any)    { log("error", fmt.Sprintf(format, a...)) }
-func Fatalf(format string, a ...any)    { log("fatal", fmt.Sprintf(format, a...)); os.Exit(1) }
-func Fatal(msg string)                  { log("fatal", msg); os.Exit(1) }
+func Info(msg string)                { log("info", msg) }
+func Debug(msg string)               { log("debug", msg) }
+func Error(msg string)               { log("error", msg) }
+func Infof(format string, a ...any)  { log("info", fmt.Sprintf(format, a...)) }
+func Debugf(format string, a ...any) { log("debug", fmt.Sprintf(format, a...)) }
+func Errorf(format string, a ...any) { log("error", fmt.Sprintf(format, a...)) }
+func Fatalf(format string, a ...any) { log("fatal", fmt.Sprintf(format, a...)); os.Exit(1) }
+func Fatal(msg string)               { log("fatal", msg); os.Exit(1) }

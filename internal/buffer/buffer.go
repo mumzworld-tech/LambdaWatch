@@ -19,12 +19,12 @@ func (e *LogEntry) Size() int {
 
 // Buffer is a thread-safe bounded buffer for log entries
 type Buffer struct {
-	mu        sync.Mutex
-	entries   []LogEntry
-	maxSize   int
-	byteSize  int // Current total byte size
-	ready     chan struct{}
-	closed    bool
+	mu       sync.Mutex
+	entries  []LogEntry
+	maxSize  int
+	byteSize int // Current total byte size
+	ready    chan struct{}
+	closed   bool
 }
 
 // New creates a new buffer with the specified max size

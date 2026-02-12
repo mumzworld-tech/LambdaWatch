@@ -263,7 +263,7 @@ func startMockLoki(t *testing.T) (*httptest.Server, *int, *[][]byte) {
 		defer mu.Unlock()
 		*pushCount++
 		body := make([]byte, r.ContentLength)
-		r.Body.Read(body)
+		_, _ = r.Body.Read(body)
 		*bodies = append(*bodies, body)
 		w.WriteHeader(http.StatusNoContent)
 	}))
@@ -624,7 +624,7 @@ func TestClient_Register(t *testing.T) {
 			t.Errorf("expected POST, got %s", r.Method)
 		}
 		w.Header().Set(extensionIDHeader, "test-ext-id")
-		json.NewEncoder(w).Encode(RegisterResponse{
+		_ = json.NewEncoder(w).Encode(RegisterResponse{
 			FunctionName:    "test-func",
 			FunctionVersion: "$LATEST",
 		})
@@ -673,7 +673,7 @@ func TestClient_Register_Failure(t *testing.T) {
 
 func TestClient_NextEvent_Invoke(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(NextEventResponse{
+		_ = json.NewEncoder(w).Encode(NextEventResponse{
 			EventType: Invoke,
 			RequestID: "req-abc",
 		})
@@ -700,7 +700,7 @@ func TestClient_NextEvent_Invoke(t *testing.T) {
 
 func TestClient_NextEvent_Shutdown(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(NextEventResponse{
+		_ = json.NewEncoder(w).Encode(NextEventResponse{
 			EventType:      Shutdown,
 			ShutdownReason: "spindown",
 		})

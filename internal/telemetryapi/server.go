@@ -24,13 +24,13 @@ type RuntimeDoneHandler func(requestID string)
 
 // Server is an HTTP server that receives telemetry from Lambda
 type Server struct {
-	server            *http.Server
-	buffer            *buffer.Buffer
-	port              int
-	maxLineSize       int
-	extractRequestID  bool
-	onRuntimeDone     RuntimeDoneHandler
-	currentRequestID  string
+	server           *http.Server
+	buffer           *buffer.Buffer
+	port             int
+	maxLineSize      int
+	extractRequestID bool
+	onRuntimeDone    RuntimeDoneHandler
+	currentRequestID string
 }
 
 // NewServer creates a new telemetry receiver server
@@ -269,20 +269,20 @@ func formatPlatformReport(record interface{}) string {
 	if !ok || requestID == "" {
 		return formatAsJSON(record)
 	}
-	
+
 	duration, _ := metrics["durationMs"].(float64)
 	billedDuration, _ := metrics["billedDurationMs"].(float64)
 	memorySize, _ := metrics["memorySizeMB"].(float64)
 	maxMemoryUsed, _ := metrics["maxMemoryUsedMB"].(float64)
 	initDuration, _ := metrics["initDurationMs"].(float64)
-	
+
 	msg := fmt.Sprintf("REPORT RequestId: %s\tDuration: %.2f ms\tBilled Duration: %.0f ms\tMemory Size: %.0f MB\tMax Memory Used: %.0f MB",
 		requestID, duration, billedDuration, memorySize, maxMemoryUsed)
-	
+
 	if initDuration > 0 {
 		msg += fmt.Sprintf("\tInit Duration: %.2f ms", initDuration)
 	}
-	
+
 	return msg
 }
 

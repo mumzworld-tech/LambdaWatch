@@ -17,7 +17,7 @@ func TestClient_Subscribe_Success(t *testing.T) {
 			t.Errorf("expected extension ID header ext-123, got %s", r.Header.Get(extensionIDHeader))
 		}
 		var req SubscribeRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		if len(req.Types) != 3 {
 			t.Errorf("expected 3 types, got %d", len(req.Types))
 		}

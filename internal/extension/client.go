@@ -17,9 +17,9 @@ const (
 
 // Client is a Lambda Extensions API client
 type Client struct {
-	baseURL      string
-	httpClient   *http.Client
-	extensionID  string
+	baseURL       string
+	httpClient    *http.Client
+	extensionID   string
 	extensionName string
 }
 
@@ -29,8 +29,8 @@ func NewClient() *Client {
 	extensionName := filepath.Base(os.Args[0])
 
 	return &Client{
-		baseURL:      fmt.Sprintf("http://%s/2020-01-01/extension", runtimeAPI),
-		httpClient:   &http.Client{},
+		baseURL:       fmt.Sprintf("http://%s/2020-01-01/extension", runtimeAPI),
+		httpClient:    &http.Client{},
 		extensionName: extensionName,
 	}
 }

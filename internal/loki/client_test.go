@@ -524,7 +524,7 @@ func TestClient_Push_ContentType(t *testing.T) {
 // TC-5.6.3: Network Error
 func TestClient_Push_NetworkError(t *testing.T) {
 	cfg := newTestConfig("http://localhost:99999") // Invalid port
-	cfg.MaxRetries = 0                              // No retries for faster test
+	cfg.MaxRetries = 0                             // No retries for faster test
 	client := NewClient(cfg)
 
 	err := client.Push(context.Background(), newTestRequest())

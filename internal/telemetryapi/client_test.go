@@ -17,7 +17,7 @@ func TestClient_Subscribe_Success(t *testing.T) {
 			t.Errorf("expected ext-456, got %s", r.Header.Get(extensionIDHeader))
 		}
 		var req SubscribeRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		if req.SchemaVersion != "2022-07-01" {
 			t.Errorf("expected schema 2022-07-01, got %s", req.SchemaVersion)
 		}

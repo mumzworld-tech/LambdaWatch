@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "*.go"
+      run: |
+        export PATH="/usr/local/go/bin:/opt/homebrew/bin:$HOME/go/bin:$PATH"
+        go fmt ./...
+      stage_fixed: true
+    lint:
+      glob: "*.go"
+      skip:
+        - run: "! command -v golangci-lint >/dev/null 2>&1"
+      run: |
+        export PATH="/usr/local/go/bin:/opt/homebrew/bin:$HOME/go/bin:$PATH"
+        golangci-lint run --timeout=5m

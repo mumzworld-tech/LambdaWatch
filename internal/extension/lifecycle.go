@@ -18,9 +18,9 @@ const (
 	telemetryServerPort = 8080
 
 	// Timeouts and intervals
-	criticalFlushTimeout  = 10 * time.Second
-	shutdownTimeout       = 2 * time.Second
-	finalDeliveryWait     = 100 * time.Millisecond
+	criticalFlushTimeout = 10 * time.Second
+	shutdownTimeout      = 2 * time.Second
+	finalDeliveryWait    = 100 * time.Millisecond
 )
 
 // State represents the extension's current operational state
@@ -80,11 +80,11 @@ func NewManager(cfg *config.Config) *Manager {
 		intervalChange: make(chan struct{}, 1),
 	}
 	m.state.Store(int32(StateIdle))
-	
+
 	// Set buffer in logger so extension logs go to both stdout and buffer
 	// Telemetry API won't capture our own extension logs, so we add them directly
 	logger.SetBuffer(m.buffer)
-	
+
 	return m
 }
 

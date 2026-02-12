@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	extensionIDHeader  = "Lambda-Extension-Identifier"
+	extensionIDHeader   = "Lambda-Extension-Identifier"
 	telemetryAPIVersion = "2022-07-01"
 )
 

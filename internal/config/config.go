@@ -17,15 +17,15 @@ type Config struct {
 	LokiTenantID string
 
 	// Batching
-	BatchSize            int
-	MaxBatchSizeBytes    int // Max batch size in bytes (0 = no limit)
-	FlushIntervalMs      int
-	IdleFlushMultiplier  int // Multiplier for flush interval when idle (default 3x)
+	BatchSize           int
+	MaxBatchSizeBytes   int // Max batch size in bytes (0 = no limit)
+	FlushIntervalMs     int
+	IdleFlushMultiplier int // Multiplier for flush interval when idle (default 3x)
 
 	// Reliability
-	MaxRetries          int
+	MaxRetries           int
 	CriticalFlushRetries int // Higher retries for critical flushes (shutdown, runtimeDone)
-	EnableGzip          bool
+	EnableGzip           bool
 	CompressionThreshold int // Only compress if payload > this size (bytes)
 
 	// Custom labels
