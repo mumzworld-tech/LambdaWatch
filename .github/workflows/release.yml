@@ -36,7 +36,7 @@ jobs:
         id: meta
         run: |
           BRANCH="${GITHUB_REF_NAME}"
-          TIMESTAMP=$(date -u +'%Y%m%d-%H%M%S')
+          TIMESTAMP=$(date -u +'%Y-%m-%d-%H%M%S')
           DISPLAY_TIME=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
           SHORT_SHA="${GITHUB_SHA::7}"
 
@@ -51,10 +51,20 @@ jobs:
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           fi
 
+          # Get commits since last release tag for this branch
+          PREV_TAG=$(git tag --list "${BRANCH}-*" --sort=-creatordate | head -n1)
+          if [ -n "$PREV_TAG" ]; then
+            CHANGELOG=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s (\`%h\`)" --reverse)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (\`%h\`)" --reverse -20)
+          fi
+
           cat <<EOF > release_body.md
           **Branch:** \`${BRANCH}\`
           **Commit:** \`${GITHUB_SHA}\`
-          **Message:** $(git log -1 --pretty=%s)
+
+          ### Changes
+          ${CHANGELOG}
 
           ### Assets
           | File | Architecture |
