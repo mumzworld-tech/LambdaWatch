@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
@@ -31,6 +32,7 @@ type Server struct {
 	extractRequestID bool
 	onRuntimeDone    RuntimeDoneHandler
 	currentRequestID string
+	requestIDMu      sync.RWMutex
 }
 
 // NewServer creates a new telemetry receiver server
@@ -105,16 +107,21 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			// Extract request ID from platform.start
 			if record, ok := event.Record.(map[string]interface{}); ok {
 				if reqID, ok := record["requestId"].(string); ok {
+					s.requestIDMu.Lock()
 					s.currentRequestID = reqID
+					s.requestIDMu.Unlock()
 				}
 			}
 			// Ship platform.start log in Lambda format
 			ts := parseTimestamp(event.Time)
+			s.requestIDMu.RLock()
+			currentReqID := s.currentRequestID
+			s.requestIDMu.RUnlock()
 			entry := buffer.LogEntry{
 				Timestamp: ts,
 				Message:   formatPlatformStart(event.Record),
 				Type:      event.Type,
-				RequestID: s.currentRequestID,
+				RequestID: currentReqID,
 			}
 			entries = append(entries, entry)
 
@@ -126,11 +133,14 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			ts := parseTimestamp(event.Time)
+			s.requestIDMu.RLock()
+			currentReqID := s.currentRequestID
+			s.requestIDMu.RUnlock()
 			entry := buffer.LogEntry{
 				Timestamp: ts,
 				Message:   formatPlatformRuntimeDone(event.Record),
 				Type:      event.Type,
-				RequestID: s.currentRequestID,
+				RequestID: currentReqID,
 			}
 			entries = append(entries, entry)
 
@@ -144,7 +154,9 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// Extract request ID from message if enabled
+			s.requestIDMu.RLock()
 			requestID := s.currentRequestID
+			s.requestIDMu.RUnlock()
 			if s.extractRequestID && requestID == "" {
 				requestID = extractRequestID(message)
 			}
@@ -175,11 +187,14 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 			// Log platform report in Lambda format
 			ts := parseTimestamp(event.Time)
 			message := formatPlatformReport(event.Record)
+			s.requestIDMu.RLock()
+			currentReqID := s.currentRequestID
+			s.requestIDMu.RUnlock()
 			entry := buffer.LogEntry{
 				Timestamp: ts,
 				Message:   message,
 				Type:      event.Type,
-				RequestID: s.currentRequestID,
+				RequestID: currentReqID,
 			}
 			entries = append(entries, entry)
 		}

@@ -253,11 +253,11 @@ func (m *Manager) flushLoop(ctx context.Context) {
 				logger.Infof("Flush interval adjusted to: %v (state: %s)", interval, m.getState())
 			}
 		case <-ticker.C:
-			m.flush(ctx, false)
+			m.flush(ctx)
 		case <-m.buffer.Ready():
 			// Check if we have enough for a batch (by count or bytes)
 			if m.shouldFlush() {
-				m.flush(ctx, false)
+				m.flush(ctx)
 			}
 		}
 	}
@@ -318,7 +318,7 @@ func (m *Manager) flushBatch() (*loki.PushRequest, int) {
 }
 
 // flush performs a regular flush with standard retries
-func (m *Manager) flush(ctx context.Context, isCritical bool) {
+func (m *Manager) flush(ctx context.Context) {
 	m.criticalFlushMu.Lock()
 	defer m.criticalFlushMu.Unlock()
 
@@ -329,14 +329,7 @@ func (m *Manager) flush(ctx context.Context, isCritical bool) {
 
 	logger.Infof("Pushing %d log entries to Loki", count)
 
-	var err error
-	if isCritical {
-		err = m.lokiClient.PushCritical(ctx, pushReq)
-	} else {
-		err = m.lokiClient.Push(ctx, pushReq)
-	}
-
-	if err != nil {
+	if err := m.lokiClient.Push(ctx, pushReq); err != nil {
 		logger.Errorf("Failed to push logs to Loki: %v", err)
 	}
 }

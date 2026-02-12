@@ -59,7 +59,7 @@ func log(level, msg string) {
 	// Also write directly to buffer for Loki (Telemetry API won't capture our own logs)
 	if logBuffer != nil {
 		logBuffer.Add(buffer.LogEntry{
-			Timestamp: time.Now().UnixNano() / int64(time.Millisecond),
+			Timestamp: time.Now().UnixMilli(),
 			Message:   logLine,
 			Type:      "extension",
 		})

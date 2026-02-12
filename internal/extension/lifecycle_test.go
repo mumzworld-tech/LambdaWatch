@@ -289,7 +289,7 @@ func TestFlush_PushesToLoki(t *testing.T) {
 		m.buffer.Add(buffer.LogEntry{Timestamp: time.Now().UnixMilli(), Message: fmt.Sprintf("log %d", i)})
 	}
 
-	m.flush(context.Background(), false)
+	m.flush(context.Background())
 	if *pushCount != 1 {
 		t.Errorf("expected 1 push, got %d", *pushCount)
 	}
@@ -303,7 +303,7 @@ func TestFlush_EmptyBufferNoPush(t *testing.T) {
 	defer server.Close()
 
 	m := newManagerWithMockLoki(newTestConfig(), server.URL)
-	m.flush(context.Background(), false)
+	m.flush(context.Background())
 	if *pushCount != 0 {
 		t.Errorf("expected 0 pushes for empty buffer, got %d", *pushCount)
 	}
@@ -406,7 +406,7 @@ func TestFlush_MutexPreventsConurrent(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		m.flush(context.Background(), false)
+		m.flush(context.Background())
 	}()
 	go func() {
 		defer wg.Done()
