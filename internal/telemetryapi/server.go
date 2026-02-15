@@ -240,12 +240,12 @@ func formatRecordWithTimestamp(record interface{}, fallbackTime string) (string,
 		prefix := msg[:idx]
 		if tabIdx := strings.Index(prefix, "\t"); tabIdx > 0 {
 			if ts := parseTimestamp(prefix[:tabIdx]); ts > 0 {
-				return msg[idx:], ts
+				return strings.TrimSpace(msg[idx:]), ts
 			}
 		}
-		return msg[idx:], parseTimestamp(fallbackTime)
+		return strings.TrimSpace(msg[idx:]), parseTimestamp(fallbackTime)
 	}
-	return msg, parseTimestamp(fallbackTime)
+	return strings.TrimSpace(msg), parseTimestamp(fallbackTime)
 }
 
 // formatPlatformStart formats platform.start event as Lambda START message

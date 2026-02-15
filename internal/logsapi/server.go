@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
@@ -123,7 +124,7 @@ func parseTimestamp(timeStr string) int64 {
 func formatRecord(record interface{}) string {
 	switch v := record.(type) {
 	case string:
-		return v
+		return strings.TrimSpace(v)
 	default:
 		b, err := json.Marshal(v)
 		if err != nil {
