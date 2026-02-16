@@ -1,8 +1,11 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/mumzworld-tech/lambdawatch/main/assets/logo.png" alt="LambdaWatch Logo" width="200"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mumzworld-tech/lambdawatch/main/assets/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/mumzworld-tech/lambdawatch/main/assets/logo-light.png">
+    <img src="https://raw.githubusercontent.com/mumzworld-tech/lambdawatch/main/assets/logo.png" alt="LambdaWatch Logo" width="300"/>
+  </picture>
 </p>
 
-<h1 align="center">LambdaWatch</h1>
 
 <p align="center">
   <strong>High-performance AWS Lambda Extension for shipping logs to Grafana Loki</strong>
