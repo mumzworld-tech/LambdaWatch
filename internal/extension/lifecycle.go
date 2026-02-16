@@ -134,7 +134,7 @@ func (m *Manager) init(ctx context.Context) error {
 	if err := m.telemetryClient.Subscribe(ctx, m.telemetryServer.ListenerURI()); err != nil {
 		return err
 	}
-	logger.Infof("Subscribed to Telemetry API")
+	logger.Debugf("Subscribed to Telemetry API")
 
 	return nil
 }
@@ -176,13 +176,13 @@ func (m *Manager) eventLoop(ctx context.Context) error {
 			m.invocationMu.Unlock()
 
 			m.setState(StateActive)
-			logger.Infof("Received INVOKE event for request: %s (state: ACTIVE)", event.RequestID)
+			logger.Debugf("Received INVOKE event for request: %s (state: ACTIVE)", event.RequestID)
 
 			// Wait for runtimeDone to be processed before calling NextEvent again
 			// This ensures critical flush completes before we signal readiness for next invocation
 			select {
 			case <-m.invocationDone:
-				logger.Infof("Invocation complete, ready for next event")
+				logger.Debugf("Invocation complete, ready for next event")
 			case <-ctx.Done():
 				return ctx.Err()
 			}
@@ -198,7 +198,7 @@ func (m *Manager) eventLoop(ctx context.Context) error {
 func (m *Manager) setState(newState State) {
 	oldState := State(m.state.Swap(int32(newState)))
 	if oldState != newState {
-		logger.Infof("State transition: %s -> %s", oldState, newState)
+		logger.Debugf("State transition: %s -> %s", oldState, newState)
 		// Signal flush loop to recalculate interval
 		select {
 		case m.intervalChange <- struct{}{}:
@@ -236,7 +236,7 @@ func (m *Manager) flushLoop(ctx context.Context) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	logger.Infof("Flush loop started with interval: %v (state: %s)", interval, m.getState())
+	logger.Debugf("Flush loop started with interval: %v (state: %s)", interval, m.getState())
 
 	for {
 		select {
@@ -250,7 +250,7 @@ func (m *Manager) flushLoop(ctx context.Context) {
 			if newInterval != interval {
 				interval = newInterval
 				ticker.Reset(interval)
-				logger.Infof("Flush interval adjusted to: %v (state: %s)", interval, m.getState())
+				logger.Debugf("Flush interval adjusted to: %v (state: %s)", interval, m.getState())
 			}
 		case <-ticker.C:
 			m.flush(ctx)
@@ -277,7 +277,7 @@ func (m *Manager) shouldFlush() bool {
 // onRuntimeDone is called when platform.runtimeDone is received
 // This triggers a critical flush to ensure all logs are shipped at invocation end
 func (m *Manager) onRuntimeDone(requestID string) {
-	logger.Infof("Received PLATFORM_RUNTIME_DONE event for request: %s", requestID)
+	logger.Debugf("Received PLATFORM_RUNTIME_DONE event for request: %s", requestID)
 
 	// Transition to flushing state
 	m.setState(StateFlushing)
@@ -327,7 +327,7 @@ func (m *Manager) flush(ctx context.Context) {
 		return
 	}
 
-	logger.Infof("Pushing %d log entries to Loki", count)
+	logger.Debugf("Pushing %d log entries to Loki", count)
 
 	if err := m.lokiClient.Push(ctx, pushReq); err != nil {
 		logger.Errorf("Failed to push logs to Loki: %v", err)
@@ -345,7 +345,7 @@ func (m *Manager) criticalFlush(ctx context.Context) {
 		return
 	}
 
-	logger.Infof("Critical flush: %d entries", remaining)
+	logger.Debugf("Critical flush: %d entries", remaining)
 
 	// Flush only the entries that existed when we started
 	for remaining > 0 {
@@ -378,11 +378,11 @@ func (m *Manager) shutdown(ctx context.Context) error {
 	time.Sleep(finalDeliveryWait)
 
 	// Drain and flush all remaining logs with critical retries
-	logger.Infof("Draining buffer...")
+	logger.Debugf("Draining buffer...")
 	entries := m.buffer.Drain()
 
 	if len(entries) > 0 {
-		logger.Infof("Flushing %d remaining log entries with critical retries", len(entries))
+		logger.Debugf("Flushing %d remaining log entries with critical retries", len(entries))
 		batch := loki.NewBatch(m.labels, m.cfg.ExtractRequestID)
 		batch.Add(entries)
 

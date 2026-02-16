@@ -58,10 +58,10 @@ func NewServer(buf *buffer.Buffer, port int, maxLineSize int, extractRequestID b
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
-	logger.Infof("Starting telemetry receiver on port %d", s.port)
+	logger.Debugf("Starting telemetry receiver on port %d", s.port)
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Infof("Telemetry server error: %v", err)
+			logger.Debugf("Telemetry server error: %v", err)
 		}
 	}()
 	return nil
@@ -85,7 +85,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		logger.Infof("Failed to read telemetry body: %v", err)
+		logger.Debugf("Failed to read telemetry body: %v", err)
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
@@ -93,7 +93,7 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 
 	var events []TelemetryEvent
 	if err := json.Unmarshal(body, &events); err != nil {
-		logger.Infof("Failed to parse telemetry events: %v", err)
+		logger.Debugf("Failed to parse telemetry events: %v", err)
 		http.Error(w, "Failed to parse events", http.StatusBadRequest)
 		return
 	}

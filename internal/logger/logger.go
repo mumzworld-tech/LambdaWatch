@@ -13,6 +13,7 @@ var (
 	appName     string
 	environment string
 	logBuffer   *buffer.Buffer
+	debugMode   bool
 )
 
 func Init() {
@@ -24,6 +25,8 @@ func Init() {
 	if environment == "" {
 		environment = "unknown"
 	}
+	debugEnv := os.Getenv("DEBUG_MODE")
+	debugMode = debugEnv == "true" || debugEnv == "1"
 }
 
 // SetBuffer sets the buffer for extension logs to be written directly
@@ -42,6 +45,11 @@ type logEntry struct {
 }
 
 func log(level, msg string) {
+	// Skip debug logs if debug mode is disabled
+	if level == "debug" && !debugMode {
+		return
+	}
+
 	entry := logEntry{
 		Level:       level,
 		Timestamp:   time.Now().UTC().Format(time.RFC3339Nano),

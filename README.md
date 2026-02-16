@@ -253,6 +253,7 @@ Configure via environment variables on your Lambda function:
 | `LOKI_EXTRACT_REQUEST_ID` | `true`   | Extract and add `request_id` label             |
 | `LOKI_MAX_LINE_SIZE`      | `204800` | Max line size before splitting (200KB)         |
 | `BUFFER_SIZE`             | `10000`  | Max logs in memory buffer                      |
+| `DEBUG_MODE`              | `false`  | Enable verbose debug logging from extension    |
 
 ### Example Configuration
 
