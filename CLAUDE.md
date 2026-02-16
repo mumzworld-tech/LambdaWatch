@@ -23,6 +23,7 @@ make clean              # Remove build artifacts
 ```
 
 Run a single package's tests:
+
 ```bash
 go test -v ./internal/buffer/
 go test -v -run TestSpecificName ./internal/config/

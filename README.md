@@ -6,7 +6,6 @@
   </picture>
 </p>
 
-
 <p align="center">
   <strong>High-performance AWS Lambda Extension for shipping logs to Grafana Loki</strong>
 </p>
@@ -97,11 +96,13 @@ cd lambdawatch
 ```
 
 **For ARM64 (Graviton) - Recommended for cost savings:**
+
 ```bash
 make package
 ```
 
 **For x86_64 (Intel/AMD):**
+
 ```bash
 make package-amd64
 ```
@@ -213,45 +214,45 @@ Configure via environment variables on your Lambda function:
 
 ### Required
 
-| Variable | Description |
-|----------|-------------|
+| Variable   | Description                                                       |
+| ---------- | ----------------------------------------------------------------- |
 | `LOKI_URL` | Loki push URL (e.g., `https://loki.example.com/loki/api/v1/push`) |
 
 ### Authentication
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOKI_USERNAME` | — | Basic auth username |
-| `LOKI_PASSWORD` | — | Basic auth password |
-| `LOKI_API_KEY` | — | Bearer token (alternative to basic auth) |
-| `LOKI_TENANT_ID` | — | Multi-tenant org ID (`X-Scope-OrgID` header) |
+| Variable         | Default | Description                                  |
+| ---------------- | ------- | -------------------------------------------- |
+| `LOKI_USERNAME`  | —       | Basic auth username                          |
+| `LOKI_PASSWORD`  | —       | Basic auth password                          |
+| `LOKI_API_KEY`   | —       | Bearer token (alternative to basic auth)     |
+| `LOKI_TENANT_ID` | —       | Multi-tenant org ID (`X-Scope-OrgID` header) |
 
 ### Batching & Performance
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOKI_BATCH_SIZE` | `100` | Max logs per batch |
-| `LOKI_MAX_BATCH_SIZE_BYTES` | `5242880` | Max batch size (5MB) |
-| `LOKI_FLUSH_INTERVAL_MS` | `1000` | Flush interval in ms |
-| `LOKI_IDLE_FLUSH_MULTIPLIER` | `3` | Interval multiplier when idle |
+| Variable                     | Default   | Description                   |
+| ---------------------------- | --------- | ----------------------------- |
+| `LOKI_BATCH_SIZE`            | `100`     | Max logs per batch            |
+| `LOKI_MAX_BATCH_SIZE_BYTES`  | `5242880` | Max batch size (5MB)          |
+| `LOKI_FLUSH_INTERVAL_MS`     | `1000`    | Flush interval in ms          |
+| `LOKI_IDLE_FLUSH_MULTIPLIER` | `3`       | Interval multiplier when idle |
 
 ### Reliability
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOKI_MAX_RETRIES` | `3` | Retry attempts for regular flushes |
-| `LOKI_CRITICAL_FLUSH_RETRIES` | `5` | Retry attempts for critical flushes |
-| `LOKI_ENABLE_GZIP` | `true` | Enable gzip compression |
-| `LOKI_COMPRESSION_THRESHOLD` | `1024` | Compress only if > 1KB |
+| Variable                      | Default | Description                         |
+| ----------------------------- | ------- | ----------------------------------- |
+| `LOKI_MAX_RETRIES`            | `3`     | Retry attempts for regular flushes  |
+| `LOKI_CRITICAL_FLUSH_RETRIES` | `5`     | Retry attempts for critical flushes |
+| `LOKI_ENABLE_GZIP`            | `true`  | Enable gzip compression             |
+| `LOKI_COMPRESSION_THRESHOLD`  | `1024`  | Compress only if > 1KB              |
 
 ### Labels & Processing
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOKI_LABELS` | `{}` | Custom labels as JSON (e.g., `{"env":"prod"}`) |
-| `LOKI_EXTRACT_REQUEST_ID` | `true` | Extract and add `request_id` label |
-| `LOKI_MAX_LINE_SIZE` | `204800` | Max line size before splitting (200KB) |
-| `BUFFER_SIZE` | `10000` | Max logs in memory buffer |
+| Variable                  | Default  | Description                                    |
+| ------------------------- | -------- | ---------------------------------------------- |
+| `LOKI_LABELS`             | `{}`     | Custom labels as JSON (e.g., `{"env":"prod"}`) |
+| `LOKI_EXTRACT_REQUEST_ID` | `true`   | Extract and add `request_id` label             |
+| `LOKI_MAX_LINE_SIZE`      | `204800` | Max line size before splitting (200KB)         |
+| `BUFFER_SIZE`             | `10000`  | Max logs in memory buffer                      |
 
 ### Example Configuration
 
@@ -274,14 +275,14 @@ aws lambda update-function-configuration \
 
 Every log entry includes these labels automatically:
 
-| Label | Description | Source |
-|-------|-------------|--------|
-| `function_name` | Lambda function name | Extensions API |
-| `function_version` | Function version ($LATEST, 1, 2, etc.) | Extensions API |
-| `region` | AWS region (us-east-1, etc.) | AWS_REGION env |
-| `request_id` | Invocation request ID | Extracted from logs (if enabled) |
-| `source` | Always `lambda` | Hardcoded |
-| `service_name` | Service identifier for grouping functions | SERVICE_NAME env (optional) |
+| Label              | Description                               | Source                           |
+| ------------------ | ----------------------------------------- | -------------------------------- |
+| `function_name`    | Lambda function name                      | Extensions API                   |
+| `function_version` | Function version ($LATEST, 1, 2, etc.)    | Extensions API                   |
+| `region`           | AWS region (us-east-1, etc.)              | AWS_REGION env                   |
+| `request_id`       | Invocation request ID                     | Extracted from logs (if enabled) |
+| `source`           | Always `lambda`                           | Hardcoded                        |
+| `service_name`     | Service identifier for grouping functions | SERVICE_NAME env (optional)      |
 
 ### Example Queries
 
@@ -323,6 +324,7 @@ LambdaWatch extension logs are output in the same JSON structure as your applica
 The extension uses `APP_NAME` environment variable for `app_name` field, falling back to `SERVICE_NAME` if not set. The `environment` field is populated from `NODE_ENV`.
 
 To filter extension logs vs application logs in Grafana:
+
 ```logql
 # Extension logs only
 {service_name="my-service"} | json | context="LambdaWatch"
@@ -399,26 +401,26 @@ LambdaWatch uses adaptive flush intervals based on invocation state:
 
 ## Performance
 
-| Metric | Value |
-|--------|-------|
-| Binary size | ~6MB |
-| Memory overhead | ~10MB |
-| Cold start impact | <50ms |
+| Metric            | Value          |
+| ----------------- | -------------- |
+| Binary size       | ~6MB           |
+| Memory overhead   | ~10MB          |
+| Cold start impact | <50ms          |
 | Compression ratio | ~80% reduction |
 
 ---
 
 ## Comparison with Alternatives
 
-| Feature | LambdaWatch | CloudWatch | Datadog | Other Extensions |
-|---------|:-----------:|:----------:|:-------:|:----------------:|
-| Self-hosted | ✅ | ❌ | ❌ | Varies |
-| Zero vendor lock-in | ✅ | ❌ | ❌ | ❌ |
-| No code changes | ✅ | ✅ | ❌ | ✅ |
-| Request ID tracking | ✅ | ❌ | ✅ | ❌ |
-| Adaptive intervals | ✅ | N/A | ❌ | ❌ |
-| Critical flush | ✅ | N/A | ✅ | ❌ |
-| Cost | Free + Loki | $$$$ | $$$$ | Varies |
+| Feature             | LambdaWatch | CloudWatch | Datadog | Other Extensions |
+| ------------------- | :---------: | :--------: | :-----: | :--------------: |
+| Self-hosted         |     ✅      |     ❌     |   ❌    |      Varies      |
+| Zero vendor lock-in |     ✅      |     ❌     |   ❌    |        ❌        |
+| No code changes     |     ✅      |     ✅     |   ❌    |        ✅        |
+| Request ID tracking |     ✅      |     ❌     |   ✅    |        ❌        |
+| Adaptive intervals  |     ✅      |    N/A     |   ❌    |        ❌        |
+| Critical flush      |     ✅      |    N/A     |   ✅    |        ❌        |
+| Cost                | Free + Loki |    $$$$    |  $$$$   |      Varies      |
 
 ---
 
@@ -493,5 +495,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <p align="center">
-  <sub>Built with ❤️ for the cloud-native community</sub>
+  <sub>Built with ❤️ by <a href="https://github.com/Sami-AlEsh">Sami</a> for the cloud-native community</sub>
 </p>
