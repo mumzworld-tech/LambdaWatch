@@ -15,7 +15,8 @@
   <a href="#installation">Installation</a> •
   <a href="#configuration">Configuration</a> •
   <a href="#architecture">Architecture</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="#contributing">Contributing</a>•
+    <a href="#security">Security</a>
 </p>
 
 <p align="center">
@@ -470,15 +471,14 @@ make build
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.MD) for details on the development workflow, how to submit pull requests, and how to report bugs.
 
-1. Fork the repository
-2. Install dependencies: `brew install lefthook golangci-lint`
-3. Set up git hooks: `lefthook install`
-4. Create your feature branch (`git checkout -b feature/amazing-feature`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+Please make sure to follow our [Code of Conduct](CODE_OF_CONDUCT.md) when participating in this project.
+
+## Security
+
+If you discover a security vulnerability, please **do not** open a public issue. Instead, follow the instructions in our [Security Policy](SECURITY.md) to report it responsibly.
+
 
 ---
 
