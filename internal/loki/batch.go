@@ -3,7 +3,7 @@ package loki
 import (
 	"strconv"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
 )
 
 // Batch collects log entries for sending to Loki

@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/config"
+	"github.com/mumzworld-tech/lambdawatch/internal/config"
 )
 
 const (

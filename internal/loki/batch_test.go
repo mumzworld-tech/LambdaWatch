@@ -3,7 +3,7 @@ package loki
 import (
 	"testing"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
 )
 
 func TestBatch_NewBatch(t *testing.T) {

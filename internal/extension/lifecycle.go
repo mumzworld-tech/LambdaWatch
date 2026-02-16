@@ -7,11 +7,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
-	"github.com/Sami-AlEsh/lambdawatch/internal/config"
-	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
-	"github.com/Sami-AlEsh/lambdawatch/internal/loki"
-	"github.com/Sami-AlEsh/lambdawatch/internal/telemetryapi"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/config"
+	"github.com/mumzworld-tech/lambdawatch/internal/logger"
+	"github.com/mumzworld-tech/lambdawatch/internal/loki"
+	"github.com/mumzworld-tech/lambdawatch/internal/telemetryapi"
 )
 
 const (

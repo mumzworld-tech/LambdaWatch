@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
 )
 
 func newTestServer(maxLineSize int, extractRequestID bool, onRuntimeDone RuntimeDoneHandler) *Server {

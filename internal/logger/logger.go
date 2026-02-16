@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
 )
 
 var (

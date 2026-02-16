@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
-	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/logger"
 )
 
 var requestIDRegex = regexp.MustCompile(`(?i)RequestId:\s*([a-f0-9-]+)`)

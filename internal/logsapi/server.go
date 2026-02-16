@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
-	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/logger"
 )
 
 // Server is an HTTP server that receives logs from Lambda

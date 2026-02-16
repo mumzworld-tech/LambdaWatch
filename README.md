@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Sami-AlEsh/lambdawatch/main/assets/logo.png" alt="LambdaWatch Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/mumzworld-tech/lambdawatch/main/assets/logo.png" alt="LambdaWatch Logo" width="200"/>
 </p>
 
 <h1 align="center">LambdaWatch</h1>
@@ -20,7 +20,7 @@
   <img src="https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version"/>
   <img src="https://img.shields.io/badge/AWS-Lambda-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS Lambda"/>
   <img src="https://img.shields.io/badge/Grafana-Loki-F46800?style=for-the-badge&logo=grafana&logoColor=white" alt="Grafana Loki"/>
-  <img src="https://img.shields.io/github/license/Sami-AlEsh/lambdawatch?style=for-the-badge" alt="License"/>
+  <img src="https://img.shields.io/github/license/mumzworld-tech/lambdawatch?style=for-the-badge" alt="License"/>
 </p>
 
 ---
@@ -89,7 +89,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 Clone the repository and build for your Lambda architecture:
 
 ```bash
-git clone https://github.com/Sami-AlEsh/lambdawatch.git
+git clone https://github.com/mumzworld-tech/lambdawatch.git
 cd lambdawatch
 ```
 
@@ -199,7 +199,7 @@ aws lambda update-function-configuration \
 Download the latest release from GitHub:
 
 ```bash
-curl -LO https://github.com/Sami-AlEsh/lambdawatch/releases/latest/download/lambdawatch-layer-arm64.zip
+curl -LO https://github.com/mumzworld-tech/lambdawatch/releases/latest/download/lambdawatch-layer-arm64.zip
 ```
 
 ---
@@ -425,7 +425,7 @@ LambdaWatch uses adaptive flush intervals based on invocation state:
 
 ```bash
 # Clone and install git hooks (required once after cloning)
-git clone https://github.com/Sami-AlEsh/lambdawatch.git
+git clone https://github.com/mumzworld-tech/lambdawatch.git
 cd lambdawatch
 lefthook install
 ```

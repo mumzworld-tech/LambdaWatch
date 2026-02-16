@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/buffer"
+	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
 )
 
 func TestInit_AppNameFromAPP_NAME(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/config"
-	"github.com/Sami-AlEsh/lambdawatch/internal/extension"
-	"github.com/Sami-AlEsh/lambdawatch/internal/logger"
+	"github.com/mumzworld-tech/lambdawatch/internal/config"
+	"github.com/mumzworld-tech/lambdawatch/internal/extension"
+	"github.com/mumzworld-tech/lambdawatch/internal/logger"
 )
 
 func main() {

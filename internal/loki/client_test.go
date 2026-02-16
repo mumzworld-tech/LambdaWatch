@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Sami-AlEsh/lambdawatch/internal/config"
+	"github.com/mumzworld-tech/lambdawatch/internal/config"
 )
 
 func newTestConfig(endpoint string) *config.Config {
