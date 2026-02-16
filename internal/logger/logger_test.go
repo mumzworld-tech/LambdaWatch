@@ -72,6 +72,10 @@ func TestSetBuffer_NilBufferNoWrite(t *testing.T) {
 }
 
 func TestLogLevels(t *testing.T) {
+	os.Setenv("DEBUG_MODE", "true")
+	defer os.Unsetenv("DEBUG_MODE")
+	Init() // Re-initialize to pick up debug mode
+
 	buf := buffer.New(100)
 	SetBuffer(buf)
 	defer SetBuffer(nil)
@@ -86,6 +90,10 @@ func TestLogLevels(t *testing.T) {
 }
 
 func TestLogFormatFunctions(t *testing.T) {
+	os.Setenv("DEBUG_MODE", "true")
+	defer os.Unsetenv("DEBUG_MODE")
+	Init() // Re-initialize to pick up debug mode
+
 	buf := buffer.New(100)
 	SetBuffer(buf)
 	defer SetBuffer(nil)
