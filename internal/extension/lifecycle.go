@@ -311,7 +311,7 @@ func (m *Manager) flushBatch() (*loki.PushRequest, int) {
 		return nil, 0
 	}
 
-	batch := loki.NewBatch(m.labels, m.cfg.ExtractRequestID)
+	batch := loki.NewBatch(m.labels, m.cfg.GroupByRequestID, m.cfg.ExtractRequestID)
 	batch.Add(entries)
 
 	return batch.ToPushRequest(), len(entries)
@@ -383,7 +383,7 @@ func (m *Manager) shutdown(ctx context.Context) error {
 
 	if len(entries) > 0 {
 		logger.Debugf("Flushing %d remaining log entries with critical retries", len(entries))
-		batch := loki.NewBatch(m.labels, m.cfg.ExtractRequestID)
+		batch := loki.NewBatch(m.labels, m.cfg.GroupByRequestID, m.cfg.ExtractRequestID)
 		batch.Add(entries)
 
 		pushReq := batch.ToPushRequest()

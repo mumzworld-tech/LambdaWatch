@@ -231,10 +231,22 @@
 
 - **Setup**: `LOKI_EXTRACT_REQUEST_ID=true` (default)
 - **Action**: Push function logs
-- **Expected**: Logs grouped by request_id label
+- **Expected**: Request IDs extracted from log messages and attached to log entries
 
 ### TC-1.9.4: Request ID Extraction Disabled
 
 - **Setup**: `LOKI_EXTRACT_REQUEST_ID=false`
 - **Action**: Push function logs
-- **Expected**: All logs in single stream, no request_id label
+- **Expected**: No request ID extraction from messages, no request_id in log content
+
+### TC-1.9.5: Group By Request ID Disabled (Default)
+
+- **Setup**: `LOKI_GROUP_BY_REQUEST_ID=false` (default)
+- **Action**: Push function logs with different request IDs
+- **Expected**: All logs in single stream, request_id injected into log message content (JSON field or text prefix)
+
+### TC-1.9.6: Group By Request ID Enabled
+
+- **Setup**: `LOKI_GROUP_BY_REQUEST_ID=true`
+- **Action**: Push function logs with different request IDs
+- **Expected**: Logs grouped into separate Loki streams by request_id label

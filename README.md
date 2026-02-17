@@ -78,7 +78,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 ### Observability
 
 - **Structured extension logs** — Extension logs use same JSON format as your application
-- **Request ID extraction** — Automatic `request_id` label for request tracing
+- **Request ID extraction** — Automatic `request_id` injection into log messages for request tracing
 - **Auto-labeling** — Adds `function_name`, `function_version`, `region`
 - **Custom labels** — Add your own labels via JSON config
 - **Long message splitting** — Handles logs exceeding Loki's line limit
@@ -251,7 +251,8 @@ Configure via environment variables on your Lambda function:
 | Variable                  | Default  | Description                                    |
 | ------------------------- | -------- | ---------------------------------------------- |
 | `LOKI_LABELS`             | `{}`     | Custom labels as JSON (e.g., `{"env":"prod"}`) |
-| `LOKI_EXTRACT_REQUEST_ID` | `true`   | Extract and add `request_id` label             |
+| `LOKI_EXTRACT_REQUEST_ID` | `true`   | Extract `request_id` and inject into log messages |
+| `LOKI_GROUP_BY_REQUEST_ID`| `false`  | Group logs into separate Loki streams by `request_id` |
 | `LOKI_MAX_LINE_SIZE`      | `204800` | Max line size before splitting (200KB)         |
 | `BUFFER_SIZE`             | `10000`  | Max logs in memory buffer                      |
 | `DEBUG_MODE`              | `false`  | Enable verbose debug logging from extension    |
@@ -282,7 +283,7 @@ Every log entry includes these labels automatically:
 | `function_name`    | Lambda function name                      | Extensions API                   |
 | `function_version` | Function version ($LATEST, 1, 2, etc.)    | Extensions API                   |
 | `region`           | AWS region (us-east-1, etc.)              | AWS_REGION env                   |
-| `request_id`       | Invocation request ID                     | Extracted from logs (if enabled) |
+| `request_id`       | Invocation request ID (stream label only when `LOKI_GROUP_BY_REQUEST_ID=true`) | Extracted from logs (if enabled) |
 | `source`           | Always `lambda`                           | Hardcoded                        |
 | `service_name`     | Service identifier for grouping functions | SERVICE_NAME env (optional)      |
 
@@ -292,7 +293,10 @@ Every log entry includes these labels automatically:
 # All logs from a function
 {function_name="my-function"}
 
-# Filter by request ID (great for debugging specific invocations)
+# Filter by request ID (injected into log message by default)
+{function_name="my-function"} | json | request_id="abc-123-def-456"
+
+# Filter by request ID (when LOKI_GROUP_BY_REQUEST_ID=true)
 {function_name="my-function", request_id="abc-123-def-456"}
 
 # Filter by region

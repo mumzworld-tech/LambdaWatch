@@ -29,6 +29,7 @@ func newTestConfig() *config.Config {
 		BufferSize:           10000,
 		MaxLineSize:          204800,
 		ExtractRequestID:     true,
+		GroupByRequestID:     false,
 		Labels:               map[string]string{},
 	}
 }

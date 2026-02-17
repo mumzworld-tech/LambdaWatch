@@ -37,8 +37,9 @@ type Config struct {
 	// Message limits
 	MaxLineSize int // Max bytes per log line (0 = no limit)
 
-	// Request ID extraction
-	ExtractRequestID bool
+	// Request ID
+	ExtractRequestID bool // Extract request ID from log messages
+	GroupByRequestID bool // Group logs into separate Loki streams by request ID
 }
 
 func Load() (*Config, error) {
@@ -59,6 +60,7 @@ func Load() (*Config, error) {
 		BufferSize:           getEnvInt("BUFFER_SIZE", 10000),
 		MaxLineSize:          getEnvInt("LOKI_MAX_LINE_SIZE", 204800), // 200KB default
 		ExtractRequestID:     getEnvBool("LOKI_EXTRACT_REQUEST_ID", true),
+		GroupByRequestID:     getEnvBool("LOKI_GROUP_BY_REQUEST_ID", false),
 		Labels:               make(map[string]string),
 	}
 

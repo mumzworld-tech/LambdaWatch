@@ -2,6 +2,7 @@ package loki
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
 )
@@ -11,14 +12,16 @@ type Batch struct {
 	entries          []buffer.LogEntry
 	labels           map[string]string
 	groupByRequestID bool
+	extractRequestID bool
 }
 
 // NewBatch creates a new batch with the given labels
-func NewBatch(labels map[string]string, groupByRequestID bool) *Batch {
+func NewBatch(labels map[string]string, groupByRequestID bool, extractRequestID bool) *Batch {
 	return &Batch{
 		entries:          make([]buffer.LogEntry, 0),
 		labels:           labels,
 		groupByRequestID: groupByRequestID,
+		extractRequestID: extractRequestID,
 	}
 }
 
@@ -53,10 +56,38 @@ func (b *Batch) toSingleStreamRequest() *PushRequest {
 		// Convert milliseconds to nanoseconds for Loki
 		tsNano := entry.Timestamp * 1000000
 		ts := strconv.FormatInt(tsNano, 10)
-		values[i] = []string{ts, entry.Message}
+		msg := entry.Message
+		if b.extractRequestID {
+			msg = injectRequestID(msg, entry.RequestID)
+		}
+		values[i] = []string{ts, msg}
 	}
 
 	return NewPushRequest(b.labels, values)
+}
+
+// injectRequestID embeds the request ID into the log message content.
+// For JSON messages, it adds a "request_id" field. For plain text, it prepends [request_id=...].
+func injectRequestID(message, requestID string) string {
+	if requestID == "" {
+		return message
+	}
+
+	trimmed := strings.TrimSpace(message)
+	if strings.HasPrefix(trimmed, "{") {
+		// JSON message: insert "request_id":"<value>" after opening brace
+		idx := strings.Index(message, "{")
+		rest := message[idx+1:]
+		trimmedRest := strings.TrimSpace(rest)
+		if strings.HasPrefix(trimmedRest, "}") {
+			// Empty JSON object: no trailing comma needed
+			return message[:idx+1] + `"request_id":"` + requestID + `"` + rest
+		}
+		return message[:idx+1] + `"request_id":"` + requestID + `",` + rest
+	}
+
+	// Plain text: prepend request_id
+	return "[request_id=" + requestID + "] " + message
 }
 
 // toGroupedStreamRequest creates a push request with entries grouped by request ID
