@@ -19,6 +19,7 @@ const (
 
 	// Timeouts and intervals
 	flushDeadlineMargin = 500 * time.Millisecond // safety buffer before Lambda kills the process
+	flushPushTimeout    = 15 * time.Second       // bounds periodic push to prevent indefinite blocking
 	shutdownTimeout     = 2 * time.Second
 	finalDeliveryWait   = 100 * time.Millisecond
 )
@@ -332,10 +333,12 @@ func (m *Manager) flushBatch() (*loki.PushRequest, int) {
 	return batch.ToPushRequest(), len(entries)
 }
 
-// flush performs a regular flush with standard retries
+// flush performs a regular flush with standard retries.
+// Yields to critical flush when state is FLUSHING to avoid contention.
 func (m *Manager) flush(ctx context.Context) {
-	m.criticalFlushMu.Lock()
-	defer m.criticalFlushMu.Unlock()
+	if m.getState() == StateFlushing {
+		return
+	}
 
 	pushReq, count := m.flushBatch()
 	if pushReq == nil {
@@ -344,7 +347,10 @@ func (m *Manager) flush(ctx context.Context) {
 
 	logger.Debugf("Pushing %d log entries to Loki", count)
 
-	if err := m.lokiClient.Push(ctx, pushReq); err != nil {
+	pushCtx, cancel := context.WithTimeout(ctx, flushPushTimeout)
+	defer cancel()
+
+	if err := m.lokiClient.Push(pushCtx, pushReq); err != nil {
 		logger.Errorf("Failed to push logs to Loki: %v", err)
 	}
 }
