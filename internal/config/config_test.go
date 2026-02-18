@@ -39,7 +39,7 @@ func clearAllEnvVars(t *testing.T) {
 		"LOKI_FLUSH_INTERVAL_MS", "LOKI_IDLE_FLUSH_MULTIPLIER", "LOKI_MAX_RETRIES",
 		"LOKI_CRITICAL_FLUSH_RETRIES", "LOKI_ENABLE_GZIP", "LOKI_COMPRESSION_THRESHOLD",
 		"LOKI_LABELS", "BUFFER_SIZE", "LOKI_MAX_LINE_SIZE", "LOKI_EXTRACT_REQUEST_ID",
-		"LOKI_GROUP_BY_REQUEST_ID", "SERVICE_NAME",
+		"SERVICE_NAME",
 	}
 	for _, v := range vars {
 		unsetEnv(t, v)
@@ -499,37 +499,6 @@ func TestLoad_ExtractRequestIDDisabled(t *testing.T) {
 
 	if cfg.ExtractRequestID {
 		t.Errorf("ExtractRequestID = %v, want false", cfg.ExtractRequestID)
-	}
-}
-
-// TC-1.9.5: Group By Request ID Default (false)
-func TestLoad_GroupByRequestIDDefault(t *testing.T) {
-	clearAllEnvVars(t)
-	setEnv(t, "LOKI_URL", "https://loki.example.com")
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-
-	if cfg.GroupByRequestID {
-		t.Errorf("GroupByRequestID = %v, want false", cfg.GroupByRequestID)
-	}
-}
-
-// TC-1.9.6: Group By Request ID Enabled
-func TestLoad_GroupByRequestIDEnabled(t *testing.T) {
-	clearAllEnvVars(t)
-	setEnv(t, "LOKI_URL", "https://loki.example.com")
-	setEnv(t, "LOKI_GROUP_BY_REQUEST_ID", "true")
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-
-	if !cfg.GroupByRequestID {
-		t.Errorf("GroupByRequestID = %v, want true", cfg.GroupByRequestID)
 	}
 }
 
