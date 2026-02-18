@@ -58,7 +58,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 - **Zero code changes** — Works as a Lambda Layer, no SDK required
 - **Automatic batching** — Efficiently groups logs to minimize API calls
 - **Gzip compression** — Reduces payload size by ~80%
-- **Guaranteed delivery** — Critical flush on invocation end ensures no logs are lost
+- **Guaranteed delivery** — Critical flush on invocation end, bounded by Lambda's actual `DeadlineMs`, ensures no logs are lost
 - **Clean JSON extraction** — Strips Lambda log prefixes, sends pure JSON to Loki
 
 ### Reliability
@@ -390,7 +390,7 @@ LambdaWatch uses adaptive flush intervals based on invocation state:
         │ runtimeDone
         ▼
   ┌──────────┐
-  │ FLUSHING │ ◄─── Critical flush + extended interval
+  │ FLUSHING │ ◄─── Critical flush bounded by Lambda's DeadlineMs
   └────┬─────┘
        │ complete
        ▼

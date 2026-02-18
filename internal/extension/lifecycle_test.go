@@ -524,6 +524,9 @@ func TestOnRuntimeDone_TriggersFlushAndSignals(t *testing.T) {
 	cfg := newTestConfig()
 	m := newManagerWithMockLoki(cfg, server.URL)
 
+	// Simulate what eventLoop does on INVOKE: store Lambda's deadline
+	m.invocationDeadline.Store(time.Now().Add(10 * time.Second).UnixMilli())
+
 	// Set up invocationDone channel like eventLoop would
 	m.invocationMu.Lock()
 	m.invocationDone = make(chan struct{})
