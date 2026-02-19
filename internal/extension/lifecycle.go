@@ -351,7 +351,7 @@ func (m *Manager) flush(ctx context.Context) {
 	defer cancel()
 
 	if err := m.lokiClient.Push(pushCtx, pushReq); err != nil {
-		logger.Errorf("Failed to push logs to Loki: %v", err)
+		logger.Warnf("Failed to push logs to Loki: %v", err)
 	}
 }
 
