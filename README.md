@@ -58,7 +58,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 - **Zero code changes** — Works as a Lambda Layer, no SDK required
 - **Automatic batching** — Efficiently groups logs to minimize API calls
 - **Gzip compression** — Reduces payload size by ~80%
-- **Guaranteed delivery** — Critical flush on invocation end ensures no logs are lost
+- **Guaranteed delivery** — Critical flush on invocation end, bounded by Lambda's actual `DeadlineMs`, ensures no logs are lost
 - **Clean JSON extraction** — Strips Lambda log prefixes, sends pure JSON to Loki
 
 ### Reliability
@@ -78,7 +78,7 @@ No code changes required. Just add the layer and configure your Loki endpoint.
 ### Observability
 
 - **Structured extension logs** — Extension logs use same JSON format as your application
-- **Request ID extraction** — Automatic `request_id` label for request tracing
+- **Request ID extraction** — Automatic `request_id` injection into log messages for request tracing
 - **Auto-labeling** — Adds `function_name`, `function_version`, `region`
 - **Custom labels** — Add your own labels via JSON config
 - **Long message splitting** — Handles logs exceeding Loki's line limit
@@ -251,7 +251,7 @@ Configure via environment variables on your Lambda function:
 | Variable                  | Default  | Description                                    |
 | ------------------------- | -------- | ---------------------------------------------- |
 | `LOKI_LABELS`             | `{}`     | Custom labels as JSON (e.g., `{"env":"prod"}`) |
-| `LOKI_EXTRACT_REQUEST_ID` | `true`   | Extract and add `request_id` label             |
+| `LOKI_EXTRACT_REQUEST_ID` | `true`   | Embed `request_id` into log message content for filtering |
 | `LOKI_MAX_LINE_SIZE`      | `204800` | Max line size before splitting (200KB)         |
 | `BUFFER_SIZE`             | `10000`  | Max logs in memory buffer                      |
 | `DEBUG_MODE`              | `false`  | Enable verbose debug logging from extension    |
@@ -282,7 +282,7 @@ Every log entry includes these labels automatically:
 | `function_name`    | Lambda function name                      | Extensions API                   |
 | `function_version` | Function version ($LATEST, 1, 2, etc.)    | Extensions API                   |
 | `region`           | AWS region (us-east-1, etc.)              | AWS_REGION env                   |
-| `request_id`       | Invocation request ID                     | Extracted from logs (if enabled) |
+| `request_id`       | Not a stream label — embedded in log message content (if enabled) | Extracted from logs              |
 | `source`           | Always `lambda`                           | Hardcoded                        |
 | `service_name`     | Service identifier for grouping functions | SERVICE_NAME env (optional)      |
 
@@ -292,8 +292,8 @@ Every log entry includes these labels automatically:
 # All logs from a function
 {function_name="my-function"}
 
-# Filter by request ID (great for debugging specific invocations)
-{function_name="my-function", request_id="abc-123-def-456"}
+# Filter by request ID (embedded in message content)
+{function_name="my-function"} | json | request_id="abc-123-def-456"
 
 # Filter by region
 {function_name="my-function", region="us-east-1"}
@@ -390,7 +390,7 @@ LambdaWatch uses adaptive flush intervals based on invocation state:
         │ runtimeDone
         ▼
   ┌──────────┐
-  │ FLUSHING │ ◄─── Critical flush + extended interval
+  │ FLUSHING │ ◄─── Critical flush bounded by Lambda's DeadlineMs
   └────┬─────┘
        │ complete
        ▼

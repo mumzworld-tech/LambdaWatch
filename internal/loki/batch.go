@@ -2,110 +2,84 @@ package loki
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/mumzworld-tech/lambdawatch/internal/buffer"
 )
 
-// Batch collects log entries for sending to Loki
+// Batch collects log entries for a single Loki push request.
+// All entries are sent in one stream — request_id is injected into the
+// message content rather than used as a label, following Loki's best
+// practice of keeping label cardinality low.
 type Batch struct {
 	entries          []buffer.LogEntry
 	labels           map[string]string
-	groupByRequestID bool
+	extractRequestID bool
 }
 
-// NewBatch creates a new batch with the given labels
-func NewBatch(labels map[string]string, groupByRequestID bool) *Batch {
+// NewBatch creates a new batch with the given stream labels.
+// When extractRequestID is true, each entry's request ID is embedded
+// into the log message so it remains searchable via LogQL content filters.
+func NewBatch(labels map[string]string, extractRequestID bool) *Batch {
 	return &Batch{
 		entries:          make([]buffer.LogEntry, 0),
 		labels:           labels,
-		groupByRequestID: groupByRequestID,
+		extractRequestID: extractRequestID,
 	}
 }
 
-// Add adds entries to the batch
+// Add appends entries to the batch.
 func (b *Batch) Add(entries []buffer.LogEntry) {
 	b.entries = append(b.entries, entries...)
 }
 
-// Len returns the number of entries in the batch
+// Len returns the number of entries in the batch.
 func (b *Batch) Len() int {
 	return len(b.entries)
 }
 
-// ToPushRequest converts the batch to a Loki push request
-// If groupByRequestID is true, entries are grouped into separate streams by request ID
+// ToPushRequest converts the batch into a Loki PushRequest.
+// Returns nil if the batch is empty.
 func (b *Batch) ToPushRequest() *PushRequest {
 	if len(b.entries) == 0 {
 		return nil
 	}
 
-	if !b.groupByRequestID {
-		return b.toSingleStreamRequest()
-	}
-
-	return b.toGroupedStreamRequest()
-}
-
-// toSingleStreamRequest creates a push request with all entries in one stream
-func (b *Batch) toSingleStreamRequest() *PushRequest {
 	values := make([][]string, len(b.entries))
 	for i, entry := range b.entries {
-		// Convert milliseconds to nanoseconds for Loki
-		tsNano := entry.Timestamp * 1000000
+		tsNano := entry.Timestamp * 1_000_000 // milliseconds → nanoseconds
 		ts := strconv.FormatInt(tsNano, 10)
-		values[i] = []string{ts, entry.Message}
+		msg := entry.Message
+		if b.extractRequestID {
+			msg = injectRequestID(msg, entry.RequestID)
+		}
+		values[i] = []string{ts, msg}
 	}
 
 	return NewPushRequest(b.labels, values)
 }
 
-// toGroupedStreamRequest creates a push request with entries grouped by request ID
-func (b *Batch) toGroupedStreamRequest() *PushRequest {
-	// Group entries by request ID
-	groups := make(map[string][]buffer.LogEntry)
-	var order []string // Preserve order of first appearance
-
-	for _, entry := range b.entries {
-		reqID := entry.RequestID
-		if reqID == "" {
-			reqID = "unknown"
-		}
-
-		if _, exists := groups[reqID]; !exists {
-			order = append(order, reqID)
-		}
-		groups[reqID] = append(groups[reqID], entry)
+// injectRequestID embeds the request ID into the log message so it is
+// searchable via LogQL content filters without adding a high-cardinality label.
+//
+// For JSON messages it inserts a "request_id" field after the opening brace.
+// For plain text it prepends "[request_id=<value>] ".
+// If requestID is empty the message is returned unchanged.
+func injectRequestID(message, requestID string) string {
+	if requestID == "" {
+		return message
 	}
 
-	// Create streams for each group
-	streams := make([]Stream, 0, len(groups))
-
-	for _, reqID := range order {
-		entries := groups[reqID]
-
-		// Copy base labels and add request_id
-		streamLabels := make(map[string]string, len(b.labels)+1)
-		for k, v := range b.labels {
-			streamLabels[k] = v
+	trimmed := strings.TrimSpace(message)
+	if strings.HasPrefix(trimmed, "{") {
+		idx := strings.Index(message, "{")
+		rest := message[idx+1:]
+		// No trailing comma for an empty object body
+		if strings.HasPrefix(strings.TrimSpace(rest), "}") {
+			return message[:idx+1] + `"request_id":"` + requestID + `"` + rest
 		}
-		if reqID != "unknown" {
-			streamLabels["request_id"] = reqID
-		}
-
-		// Build values for this stream
-		values := make([][]string, len(entries))
-		for i, entry := range entries {
-			// Convert milliseconds to nanoseconds for Loki
-			tsNano := entry.Timestamp * 1000000
-			ts := strconv.FormatInt(tsNano, 10)
-			values[i] = []string{ts, entry.Message}
-		}
-
-		streams = append(streams, Stream{
-			Stream: streamLabels,
-			Values: values,
-		})
+		return message[:idx+1] + `"request_id":"` + requestID + `",` + rest
 	}
 
-	return &PushRequest{Streams: streams}
+	return "[request_id=" + requestID + "] " + message
 }

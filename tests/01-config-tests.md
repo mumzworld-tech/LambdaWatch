@@ -227,14 +227,14 @@
 - **Action**: Log 3KB message
 - **Expected**: Message split into 3 chunks
 
-### TC-1.9.3: Request ID Extraction Enabled
+### TC-1.9.3: Request ID Injection Enabled (Default)
 
 - **Setup**: `LOKI_EXTRACT_REQUEST_ID=true` (default)
-- **Action**: Push function logs
-- **Expected**: Logs grouped by request_id label
+- **Action**: Push function logs with a known request ID
+- **Expected**: JSON logs have `"request_id":"<value>"` field inserted; plain text logs prefixed with `[request_id=<value>]`; all logs go to a single Loki stream
 
-### TC-1.9.4: Request ID Extraction Disabled
+### TC-1.9.4: Request ID Injection Disabled
 
 - **Setup**: `LOKI_EXTRACT_REQUEST_ID=false`
 - **Action**: Push function logs
-- **Expected**: All logs in single stream, no request_id label
+- **Expected**: Messages delivered to Loki unmodified; no request_id in log content; single stream

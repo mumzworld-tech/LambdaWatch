@@ -393,7 +393,53 @@ func TestFlushBatch_EmptyBuffer(t *testing.T) {
 // 3.6 Flush Mutex
 // =====================
 
-func TestFlush_MutexPreventsConurrent(t *testing.T) {
+func TestFlush_SkipsDuringCriticalFlush(t *testing.T) {
+	server, pushCount, _ := startMockLoki(t)
+	defer server.Close()
+
+	m := newManagerWithMockLoki(newTestConfig(), server.URL)
+	for i := 0; i < 5; i++ {
+		m.buffer.Add(buffer.LogEntry{Timestamp: time.Now().UnixMilli(), Message: "test"})
+	}
+
+	// Set state to FLUSHING — simulates critical flush in progress
+	m.setState(StateFlushing)
+
+	m.flush(context.Background())
+
+	if *pushCount != 0 {
+		t.Errorf("expected flush to skip during FLUSHING state, got %d pushes", *pushCount)
+	}
+	if m.buffer.Len() != 5 {
+		t.Errorf("expected buffer to remain at 5 entries, got %d", m.buffer.Len())
+	}
+}
+
+func TestFlush_BoundedPushTimeout(t *testing.T) {
+	// Create a Loki server that blocks until signaled
+	unblock := make(chan struct{})
+	slowServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-unblock
+	}))
+	defer slowServer.Close()
+
+	cfg := newTestConfig()
+	cfg.MaxRetries = 0 // No retries to keep test fast
+	m := newManagerWithMockLoki(cfg, slowServer.URL)
+	m.buffer.Add(buffer.LogEntry{Timestamp: time.Now().UnixMilli(), Message: "test"})
+
+	start := time.Now()
+	m.flush(context.Background())
+	elapsed := time.Since(start)
+	close(unblock) // Let the server handler return so Close() doesn't block
+
+	// Should complete well within flushPushTimeout (15s), not hang indefinitely
+	if elapsed > 20*time.Second {
+		t.Errorf("flush took %v, expected to be bounded by push timeout", elapsed)
+	}
+}
+
+func TestFlush_CriticalFlushMutexProtectsShutdownVsRuntimeDone(t *testing.T) {
 	server, _, _ := startMockLoki(t)
 	defer server.Close()
 
@@ -402,18 +448,18 @@ func TestFlush_MutexPreventsConurrent(t *testing.T) {
 		m.buffer.Add(buffer.LogEntry{Timestamp: time.Now().UnixMilli(), Message: "test"})
 	}
 
+	// Both criticalFlush calls should complete without race/panic
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		m.flush(context.Background())
+		m.criticalFlush(context.Background())
 	}()
 	go func() {
 		defer wg.Done()
 		m.criticalFlush(context.Background())
 	}()
 	wg.Wait()
-	// No race/panic = pass
 }
 
 // =====================
@@ -523,6 +569,9 @@ func TestOnRuntimeDone_TriggersFlushAndSignals(t *testing.T) {
 
 	cfg := newTestConfig()
 	m := newManagerWithMockLoki(cfg, server.URL)
+
+	// Simulate what eventLoop does on INVOKE: store Lambda's deadline
+	m.invocationDeadline.Store(time.Now().Add(10 * time.Second).UnixMilli())
 
 	// Set up invocationDone channel like eventLoop would
 	m.invocationMu.Lock()

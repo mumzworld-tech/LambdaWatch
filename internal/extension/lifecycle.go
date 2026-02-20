@@ -18,9 +18,10 @@ const (
 	telemetryServerPort = 8080
 
 	// Timeouts and intervals
-	criticalFlushTimeout = 10 * time.Second
-	shutdownTimeout      = 2 * time.Second
-	finalDeliveryWait    = 100 * time.Millisecond
+	flushDeadlineMargin = 500 * time.Millisecond // safety buffer before Lambda kills the process
+	flushPushTimeout    = 15 * time.Second       // bounds periodic push to prevent indefinite blocking
+	shutdownTimeout     = 2 * time.Second
+	finalDeliveryWait   = 100 * time.Millisecond
 )
 
 // State represents the extension's current operational state
@@ -58,6 +59,9 @@ type Manager struct {
 
 	// State management for adaptive intervals
 	state atomic.Int32
+
+	// DeadlineMs from the last INVOKE event, used to derive the critical flush context
+	invocationDeadline atomic.Int64
 
 	// Critical flush synchronization
 	criticalFlushMu sync.Mutex
@@ -170,6 +174,9 @@ func (m *Manager) eventLoop(ctx context.Context) error {
 
 		switch event.EventType {
 		case Invoke:
+			// Store Lambda's deadline so onRuntimeDone can derive the flush context
+			m.invocationDeadline.Store(event.DeadlineMs)
+
 			// Create a new channel to wait for this invocation's runtimeDone
 			m.invocationMu.Lock()
 			m.invocationDone = make(chan struct{})
@@ -189,7 +196,9 @@ func (m *Manager) eventLoop(ctx context.Context) error {
 
 		case Shutdown:
 			logger.Infof("Received SHUTDOWN event, reason: %s", event.ShutdownReason)
-			return m.shutdown(ctx)
+			shutCtx, shutCancel := m.newFlushContext(event.DeadlineMs)
+			defer shutCancel()
+			return m.shutdown(shutCtx)
 		}
 	}
 }
@@ -229,6 +238,13 @@ func (m *Manager) getFlushInterval() time.Duration {
 	default:
 		return baseInterval
 	}
+}
+
+// newFlushContext creates a context bounded by Lambda's deadline minus a safety margin.
+// deadlineMs is the Unix millisecond timestamp from Lambda's NextEvent response.
+func (m *Manager) newFlushContext(deadlineMs int64) (context.Context, context.CancelFunc) {
+	deadline := time.UnixMilli(deadlineMs).Add(-flushDeadlineMargin)
+	return context.WithDeadline(context.Background(), deadline)
 }
 
 func (m *Manager) flushLoop(ctx context.Context) {
@@ -282,8 +298,8 @@ func (m *Manager) onRuntimeDone(requestID string) {
 	// Transition to flushing state
 	m.setState(StateFlushing)
 
-	// Perform critical flush with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), criticalFlushTimeout)
+	// Derive flush context from Lambda's deadline for this invocation
+	ctx, cancel := m.newFlushContext(m.invocationDeadline.Load())
 	defer cancel()
 	m.criticalFlush(ctx)
 	m.setState(StateIdle)
@@ -317,10 +333,12 @@ func (m *Manager) flushBatch() (*loki.PushRequest, int) {
 	return batch.ToPushRequest(), len(entries)
 }
 
-// flush performs a regular flush with standard retries
+// flush performs a regular flush with standard retries.
+// Yields to critical flush when state is FLUSHING to avoid contention.
 func (m *Manager) flush(ctx context.Context) {
-	m.criticalFlushMu.Lock()
-	defer m.criticalFlushMu.Unlock()
+	if m.getState() == StateFlushing {
+		return
+	}
 
 	pushReq, count := m.flushBatch()
 	if pushReq == nil {
@@ -329,8 +347,11 @@ func (m *Manager) flush(ctx context.Context) {
 
 	logger.Debugf("Pushing %d log entries to Loki", count)
 
-	if err := m.lokiClient.Push(ctx, pushReq); err != nil {
-		logger.Errorf("Failed to push logs to Loki: %v", err)
+	pushCtx, cancel := context.WithTimeout(ctx, flushPushTimeout)
+	defer cancel()
+
+	if err := m.lokiClient.Push(pushCtx, pushReq); err != nil {
+		logger.Warnf("Failed to push logs to Loki: %v", err)
 	}
 }
 

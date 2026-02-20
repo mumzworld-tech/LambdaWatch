@@ -37,8 +37,8 @@ type Config struct {
 	// Message limits
 	MaxLineSize int // Max bytes per log line (0 = no limit)
 
-	// Request ID extraction
-	ExtractRequestID bool
+	// Request ID
+	ExtractRequestID bool // Extract and embed request_id into log message content
 }
 
 func Load() (*Config, error) {
