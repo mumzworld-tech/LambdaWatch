@@ -204,12 +204,19 @@ func (s *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 		s.buffer.AddBatch(entries)
 	}
 
-	// Trigger critical flush AFTER entries are added to buffer
+	// Respond to the Telemetry API immediately so it can continue delivering
+	// subsequent events (e.g. platform.report) without waiting for our
+	// critical flush to finish pushing to Loki.
+	w.WriteHeader(http.StatusOK)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+
+	// Trigger critical flush AFTER responding — this may block on Loki I/O
+	// but will no longer delay the Telemetry API's next delivery.
 	if runtimeDoneRequestID != "" && s.onRuntimeDone != nil {
 		s.onRuntimeDone(runtimeDoneRequestID)
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // parseTimestamp parses RFC3339Nano timestamp and returns milliseconds
