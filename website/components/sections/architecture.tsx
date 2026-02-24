@@ -21,6 +21,7 @@ import {
   Send,
   BarChart3,
   ArrowRight,
+  ArrowDown,
   type LucideIcon,
 } from "lucide-react";
 
@@ -229,7 +230,7 @@ export function Architecture() {
                       <div className="h-px w-6 bg-gradient-to-r from-text-muted/40 to-text-muted/20" />
                       <ArrowRight className="h-3.5 w-3.5 text-text-muted/60" />
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-text-muted/60 sm:hidden" />
+                    <ArrowDown className="h-3.5 w-3.5 text-text-muted/60 sm:hidden" />
                   </div>
                 )}
               </div>

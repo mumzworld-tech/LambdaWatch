@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { Menu, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "@/lib/constants";
 import { GitHubStarButton } from "@/components/common";
 
@@ -14,10 +15,7 @@ export function Navbar({ stars }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { scrollY } = useScroll();
 
-  // Start from a base glass level and intensify on scroll
-  const bgOpacity = useTransform(scrollY, [0, 100], [0.6, 0.85]);
   const borderOpacity = useTransform(scrollY, [0, 100], [0.08, 0.15]);
-  const backdropBlur = useTransform(scrollY, [0, 100], [16, 24]);
   const shadow = useTransform(
     scrollY,
     [0, 100],
@@ -42,19 +40,14 @@ export function Navbar({ stars }: NavbarProps) {
   return (
     <>
       <motion.header
-        className="fixed top-3 sm:top-4 left-1/2 z-50 py-3 max-w-5xl w-[calc(100%-2rem)] -translate-x-1/2 rounded-2xl "
+        className={cn(
+          "fixed top-3 sm:top-4 left-1/2 z-50 py-3 max-w-5xl w-[calc(100%-2rem)] -translate-x-1/2 rounded-2xl",
+          "bg-clip-padding backdrop-filter backdrop-blur-xl"
+        )}
         style={{
-          backgroundColor: useTransform(
-            bgOpacity,
-            (v) => `rgba(10, 10, 10, ${v})`
-          ),
           border: useTransform(
             borderOpacity,
             (v) => `1px solid rgba(255, 153, 0, ${v})`
-          ),
-          backdropFilter: useTransform(
-            backdropBlur,
-            (v) => `blur(${v}px)`
           ),
           boxShadow: shadow,
         }}
@@ -79,11 +72,11 @@ export function Navbar({ stars }: NavbarProps) {
                 height={20}
               />
             </div>
-            <span className="hidden sm:inline">LambdaWatch</span>
+            <span>LambdaWatch</span>
           </a>
 
           {/* Center: Desktop nav links */}
-          <div className="hidden items-center gap-0.5 md:flex">
+          <div className="hidden items-center gap-0.5 lg:flex">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
@@ -97,14 +90,14 @@ export function Navbar({ stars }: NavbarProps) {
           </div>
 
           {/* Right: Desktop CTA */}
-          <div className="hidden items-center md:flex">
+          <div className="hidden items-center md:flex md:ml-auto lg:ml-0">
             <GitHubStarButton stars={stars} className="rounded-full" />
           </div>
 
           {/* Mobile: Hamburger */}
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-lg p-2 text-text-secondary transition-colors hover:text-text-primary hover:bg-white/5 md:hidden"
+            className="inline-flex ms-3 items-center justify-center rounded-lg p-2 text-text-secondary transition-colors hover:text-text-primary hover:bg-white/5 lg:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation menu"
           >
@@ -117,14 +110,14 @@ export function Navbar({ stars }: NavbarProps) {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            className="fixed inset-0 z-[60] flex flex-col bg-black/95 backdrop-blur-xl md:hidden"
+            className="fixed inset-0 z-[60] flex flex-col bg-black/95 backdrop-blur-xl lg:hidden"
             initial={{ opacity: 0, x: "100%" }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
           >
             {/* Mobile header */}
-            <div className="flex min-h-14 pt-3 items-center justify-between px-4 sm:px-6">
+            <div className="flex min-h-14 pt-6 items-center justify-between px-4 sm:px-6">
               <a
                 href="#"
                 onClick={(e) => {
