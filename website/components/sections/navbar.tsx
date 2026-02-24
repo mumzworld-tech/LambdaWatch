@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { Menu, X } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "@/lib/constants";
 import { GitHubStarButton } from "@/components/common";
@@ -63,8 +64,7 @@ export function Navbar({ stars }: NavbarProps) {
             className="flex items-center gap-2 font-bold text-lg text-brand transition-opacity hover:opacity-80"
           >
             <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-surface-lighter border border-border-subtle">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/logo.svg"
                 alt="LambdaWatch logo"
                 className="h-5 w-5"
@@ -128,8 +128,7 @@ export function Navbar({ stars }: NavbarProps) {
                 className="flex items-center gap-2 font-bold text-lg text-brand"
               >
                 <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-surface-lighter border border-border-subtle">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/logo.svg"
                     alt="LambdaWatch logo"
                     className="h-5 w-5"

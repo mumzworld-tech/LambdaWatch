@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { SectionDivider, GitHubStarButton } from "@/components/common";
 import { FOOTER_LINKS } from "@/lib/constants";
@@ -90,11 +91,13 @@ export function Footer({ stars }: FooterProps) {
             >
               <span>Built by</span>
               <span className="h-7 shrink-0 inline-flex items-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src="/mumzworld-logo.gif"
                   alt="Mumzworld"
                   className="h-full w-auto object-contain"
+                  width={100}
+                  height={28}
+                  unoptimized
                 />
               </span>
             </a>
