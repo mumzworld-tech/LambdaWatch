@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LambdaWatch is an AWS Lambda Extension written in Go 1.21+ that captures Lambda function logs and ships them to Grafana Loki in real-time. It runs as an external extension (Lambda Layer) requiring zero code changes to the monitored function. The project has **no external dependencies** — pure Go standard library.
+LambdaWatch is an AWS Lambda Extension written in Go 1.21+ that captures Lambda function logs and ships them to Grafana Loki in real-time. It runs as an external extension (Lambda Layer) requiring zero code changes to the monitored function. The Go extension has **no external dependencies** — pure Go standard library.
+
+The repository also contains a **Next.js 16 marketing website** (`website/`) — a static site showcasing features, architecture, and performance comparisons. Built with React 19, Tailwind CSS 4, motion/react, and shadcn/ui.
 
 ## Build & Development Commands
 
@@ -18,6 +20,7 @@ make fmt                # Format code (go fmt ./...)
 make lint               # Run golangci-lint
 make tidy               # go mod tidy
 make package            # Build + package as ARM64 Lambda Layer (.zip)
+make package-amd64      # Build + package as AMD64 Lambda Layer (.zip)
 make deploy             # Publish ARM64 layer to AWS
 make clean              # Remove build artifacts
 ```
@@ -28,6 +31,14 @@ Run a single package's tests:
 go test -v ./internal/buffer/
 go test -v -run TestSpecificName ./internal/config/
 ```
+
+### Git Hooks
+
+Lefthook runs `go fmt` and `golangci-lint` on pre-commit (configured in `lefthook.yml`). Install once after cloning: `lefthook install`.
+
+### CI/CD
+
+Push to `main` triggers `.github/workflows/release.yml` which runs tests, lints, builds both architectures, and creates a GitHub release with layer zip artifacts.
 
 ## Architecture
 
@@ -43,33 +54,73 @@ Lambda Function → Telemetry API (POST to :8080) → Server.handleTelemetry()
 ### State Machine (lifecycle.go)
 
 ```
-INVOKE event → ACTIVE (1s flush) → platform.runtimeDone → FLUSHING (critical flush)
-  → IDLE (3x longer flush intervals for cost optimization)
+INVOKE → ACTIVE (1s flush) → platform.runtimeDone → FLUSHING (critical flush) → IDLE (3s flush)
 ```
 
 ### Key Packages
 
-- **`cmd/extension/main.go`** — Entry point. Loads config, sets up signal handling, creates Manager, runs lifecycle.
-- **`internal/extension/lifecycle.go`** — Core orchestrator. State machine managing registration, event loop, flush loop, and shutdown. This is the central coordination point.
-- **`internal/extension/client.go`** — Lambda Extensions API HTTP client (register, next event).
-- **`internal/buffer/buffer.go`** — Thread-safe circular buffer (mutex-protected). Tracks entry count + byte size. Channel-based ready signaling. Drops oldest on overflow.
-- **`internal/telemetryapi/server.go`** — HTTP server receiving Lambda telemetry events. Handles platform.start, platform.runtimeDone, platform.report, and function logs. Deduplicates extension logs. Auto-splits long messages.
-- **`internal/telemetryapi/client.go`** — Subscribes to Lambda Telemetry API.
-- **`internal/loki/client.go`** — Loki HTTP client with two-tier retry system: regular flush (3 retries) vs critical flush (5 retries). Exponential backoff (100ms × 2^attempt). Supports bearer token, basic auth, and multi-tenant org ID.
-- **`internal/loki/batch.go`** — Converts buffer entries to Loki PushRequest. Can group streams by request ID.
-- **`internal/config/config.go`** — Loads all `LOKI_*` environment variables with defaults. Invalid values silently fall back to defaults.
-- **`internal/logger/logger.go`** — Structured JSON logger. Outputs to stdout AND directly to the buffer.
+| Package | File(s) | Purpose |
+|---------|---------|---------|
+| `cmd/extension` | `main.go` | Entry point: config, signals, Manager.Run() |
+| `internal/extension` | `lifecycle.go` | Core orchestrator: state machine, flush loop, event loop |
+| `internal/extension` | `client.go`, `events.go` | Lambda Extensions API client + event types |
+| `internal/buffer` | `buffer.go` | Thread-safe circular buffer with byte tracking |
+| `internal/telemetryapi` | `server.go`, `client.go`, `types.go` | Telemetry API receiver + subscriber |
+| `internal/loki` | `client.go`, `batch.go`, `types.go` | Loki HTTP client (retry/gzip) + batch converter |
+| `internal/config` | `config.go` | Env var loading with defaults |
+| `internal/logger` | `logger.go` | JSON logger → stdout + buffer |
+| `internal/logsapi` | `*.go` | Legacy Logs API (unused, kept for reference) |
+
+### Key Design Decisions
+
+- **Request ID as content, not label**: Injected into message content to avoid high-cardinality Loki labels. Query: `{function_name="x"} | json | request_id="abc"`.
+- **Non-blocking telemetry response**: HTTP 200 sent *before* critical flush to prevent Telemetry API delivery stalls.
+- **Deadline-bounded critical flush**: Uses Lambda's `DeadlineMs - 500ms`, not arbitrary timeout.
+- **Invocation synchronization**: Event loop blocks on `invocationDone` channel until critical flush completes.
 
 ### Concurrency Model
 
-- **Main goroutine:** Extensions API event loop (waiting for INVOKE/SHUTDOWN)
-- **Flush goroutine:** Background timer-based periodic flushing with adaptive intervals
-- **Telemetry server:** Go net/http handler goroutine
-- **Shutdown:** Signal handling (SIGTERM/SIGINT) with context cancellation, buffer drain
+- **Main goroutine:** Extensions API event loop (blocking NextEvent)
+- **Flush goroutine:** Timer-based periodic flush, yields during FLUSHING state
+- **Telemetry server:** HTTP on :8080, triggers `onRuntimeDone` synchronously after responding
+- **Shutdown:** SIGTERM/SIGINT → context cancel → server shutdown → buffer drain
 
 ### Configuration
 
-Only required env var: `LOKI_URL`. Auth via `LOKI_USERNAME`/`LOKI_PASSWORD` (basic auth) or `LOKI_API_KEY` (bearer token). See `internal/config/config.go` for all variables and defaults. Custom labels via `LOKI_LABELS` as JSON string.
+Only required env var: `LOKI_URL`. Auth via `LOKI_USERNAME`/`LOKI_PASSWORD` (basic) or `LOKI_API_KEY` (bearer). Custom labels via `LOKI_LABELS` JSON string. See exports-reference.md for all fields and defaults.
+
+## Website Commands
+
+```bash
+cd website
+pnpm install        # Install dependencies
+pnpm dev            # Dev server (localhost:3000)
+pnpm build          # Static export build
+pnpm lint           # ESLint
+```
+
+### Website Key Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `website/app/` | Next.js App Router (single page: `/`) |
+| `website/components/sections/` | 8 page sections: Navbar, Hero, Features, Architecture, Performance, Comparison, FAQ, Footer |
+| `website/components/common/` | 12 shared components: SectionWrapper, SectionHeading, GlassmorphicCard, etc. |
+| `website/components/ui/` | 24 shadcn + animation components |
+| `website/lib/constants.ts` | All static content (features, FAQ, metrics, comparisons) |
+| `website/hooks/` | useMousePosition, useScrollProgress |
+
+## Detailed Documentation
+
+@.claude/claude-md-refs/architecture.md
+@.claude/claude-md-refs/development-guide.md
+@.claude/claude-md-refs/exports-reference.md
+
+| Need Help With | See File |
+|----------------|----------|
+| Adding features, config, event handlers, sections | development-guide.md |
+| Data flow, state machine, component tree, rendering | architecture.md |
+| Finding types, functions, constants, components | exports-reference.md |
 
 ## Test Plans
 

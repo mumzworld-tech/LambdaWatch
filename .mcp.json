@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    },
+    "motion": {
+      "command": "npx",
+      "args": ["-y", "https://api.motion.dev/registry.tgz?package=motion-studio-mcp&version=latest"]
+    },
+    "@magicuidesign/mcp": {
+      "command": "npx",
+      "args": ["-y", "@magicuidesign/mcp@latest"]
+    },
+    "codemap": {
+      "command": "ulpi",
+      "args": ["codemap", "serve"],
+      "description": "Semantic code search (hybrid vector + BM25), symbol lookup, file summaries, dependency graph analysis (PageRank, cycles, coupling). Use search_code for concept-based queries, search_symbols to find functions/types by name."
+    },
+    "memory": {
+      "command": "ulpi",
+      "args": ["memory", "serve"],
+      "description": "Persistent agent memory across sessions. Search past decisions, patterns, and learnings. Save new memories, browse timeline, get session context, and manage retention."
+    },
+    "tools": {
+      "command": "ulpi",
+      "args": ["mcp", "gateway"],
+      "description": "MCP gateway proxy — aggregates tools from third-party MCP servers (databases, APIs, services) enabled for this project. Tool names are prefixed with the server name (e.g. postgres__query, stripe__list_customers)."
+    }
+  }
+}
