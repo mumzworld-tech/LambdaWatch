@@ -19,6 +19,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,6 +31,7 @@ jobs:
         with:
           version: 9
           run_install: false
+          package_json_file: website/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,11 +42,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: website
 
       - name: Build static site
         run: pnpm build:ghpages
-        working-directory: website
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
