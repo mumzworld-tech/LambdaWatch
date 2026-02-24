@@ -33,8 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
-    description:
-      "Zero-dependency AWS Lambda Extension. Zero code changes. Zero vendor lock-in.",
+    description: "Zero-dependency AWS Lambda Extension. Zero code changes. Zero vendor lock-in.",
   },
   robots: {
     index: true,
