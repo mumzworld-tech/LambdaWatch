@@ -22,6 +22,7 @@ make tidy               # go mod tidy
 make package            # Build + package as ARM64 Lambda Layer (.zip)
 make package-amd64      # Build + package as AMD64 Lambda Layer (.zip)
 make deploy             # Publish ARM64 layer to AWS
+make deploy-amd64       # Publish AMD64 layer to AWS
 make clean              # Remove build artifacts
 ```
 

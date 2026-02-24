@@ -54,6 +54,8 @@
 | `Client.NextEvent(ctx)` | method | GET /event/next → blocks until INVOKE or SHUTDOWN |
 | `Client.GetExtensionID()` | method | Returns extension identifier string |
 | `EventType` | type (string) | "INVOKE" or "SHUTDOWN" |
+| `Invoke` | const (EventType) | `"INVOKE"` — Lambda invocation event |
+| `Shutdown` | const (EventType) | `"SHUTDOWN"` — Lambda shutdown event |
 | `RegisterResponse` | struct | FunctionName, FunctionVersion, Handler |
 | `NextEventResponse` | struct | EventType, DeadlineMs, RequestID, ShutdownReason |
 | `Tracing` | struct | X-Ray Type + Value |
