@@ -104,7 +104,7 @@ pnpm lint           # ESLint
 | Directory | Purpose |
 |-----------|---------|
 | `website/app/` | Next.js App Router (single page: `/`) |
-| `website/components/sections/` | 8 page sections: Navbar, Hero, Features, Architecture, Performance, Comparison, FAQ, Footer |
+| `website/components/sections/` | 8 page sections: Navbar (floating glass pill), Hero, Features, Architecture, Performance, Comparison, FAQ, Footer |
 | `website/components/common/` | 12 shared components: SectionWrapper, SectionHeading, GlassmorphicCard, etc. |
 | `website/components/ui/` | 24 shadcn + animation components |
 | `website/lib/constants.ts` | All static content (features, FAQ, metrics, comparisons) |

@@ -58,35 +58,83 @@ export function Performance() {
           <h3 className="text-lg font-semibold text-text-primary mb-6">
             Binary Size Comparison
           </h3>
-          <div ref={chartRef} className="space-y-4">
-            {PERFORMANCE_CHART_DATA.map((item) => (
-              <div key={item.name} className="flex items-center gap-4">
-                <span className="w-40 shrink-0 text-sm text-text-secondary truncate">
-                  {item.name}
-                </span>
-                <div className="flex-1 h-8 bg-surface-lighter rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: item.color }}
-                    initial={{ width: 0 }}
-                    animate={
-                      chartInView
-                        ? {
-                            width:
-                              item.size === 0
-                                ? "2%"
-                                : `${(item.size / maxSize) * 100}%`,
-                          }
-                        : { width: 0 }
-                    }
-                    transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                  />
+          <div ref={chartRef}>
+            {/* Desktop: horizontal bars */}
+            <div className="hidden md:block space-y-4">
+              {PERFORMANCE_CHART_DATA.map((item) => (
+                <div key={item.name} className="flex items-center gap-4">
+                  <span className="w-40 shrink-0 text-sm text-text-secondary truncate">
+                    {item.name}
+                  </span>
+                  <div className="flex-1 h-8 bg-surface-lighter rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: item.color }}
+                      initial={{ width: 0 }}
+                      animate={
+                        chartInView
+                          ? {
+                              width:
+                                item.size === 0
+                                  ? "2%"
+                                  : `${(item.size / maxSize) * 100}%`,
+                            }
+                          : { width: 0 }
+                      }
+                      transition={{
+                        duration: 0.8,
+                        delay: 0.2,
+                        ease: "easeOut",
+                      }}
+                    />
+                  </div>
+                  <span className="w-16 text-right text-sm font-mono text-text-muted">
+                    {item.size === 0 ? "N/A" : `${item.size} MB`}
+                  </span>
                 </div>
-                <span className="w-16 text-right text-sm font-mono text-text-muted">
-                  {item.size === 0 ? "N/A" : `${item.size} MB`}
-                </span>
+              ))}
+            </div>
+
+            {/* Mobile: vertical bars */}
+            <div className="md:hidden">
+              <div className="grid grid-cols-4 gap-3">
+                {PERFORMANCE_CHART_DATA.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <span className="text-xs font-mono text-text-muted">
+                      {item.size === 0 ? "N/A" : `${item.size} MB`}
+                    </span>
+                    <div className="w-full h-40 bg-surface-lighter rounded-lg overflow-hidden flex items-end">
+                      <motion.div
+                        className="w-full rounded-lg"
+                        style={{ backgroundColor: item.color }}
+                        initial={{ height: 0 }}
+                        animate={
+                          chartInView
+                            ? {
+                                height:
+                                  item.size === 0
+                                    ? "5%"
+                                    : `${(item.size / maxSize) * 100}%`,
+                              }
+                            : { height: 0 }
+                        }
+                        transition={{
+                          duration: 0.8,
+                          delay: 0.2,
+                          ease: "easeOut",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs text-text-secondary text-center leading-tight">
+                      {item.name}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </GlassmorphicCard>
       </BlurFade>

@@ -241,11 +241,25 @@ Components install to `website/components/ui/`. Config in `website/components.js
 ### Design System
 
 **Colors** (defined in `website/app/globals.css` via `@theme`):
-- Brand: `--color-brand` (green-400 oklch)
-- Surface: `--color-surface-*` (dark grays)
-- Border: `--color-border-*` (subtle/default)
-- Glass: `--color-glass-*` (backdrop effects)
-- Text: `--color-text-*` (primary/secondary/muted)
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-brand` | `#FF9900` | Primary amber/orange |
+| `--color-brand-light` | `#FFB84D` | Lighter brand |
+| `--color-brand-dark` | `#CC7A00` | Darker brand |
+| `--color-brand-green` | `#22C55E` | Success/active states |
+| `--color-brand-red` | `#EF4444` | Error/destructive |
+| `--color-surface` | `#0A0A0A` | Base background |
+| `--color-surface-light` | `#141414` | Elevated surface |
+| `--color-surface-lighter` | `#1A1A1A` | Highest surface |
+| `--color-border-subtle` | `rgba(255,153,0,0.08)` | Faint borders |
+| `--color-border-medium` | `rgba(255,153,0,0.12)` | Default borders |
+| `--color-border-strong` | `rgba(255,153,0,0.20)` | Hover/focus borders |
+| `--color-glass` | `rgba(10,10,10,0.70)` | Glass card background |
+| `--color-glass-light` | `rgba(20,20,20,0.50)` | Glass hover state |
+| `--color-text-primary` | `#FAFAFA` | Headings, primary text |
+| `--color-text-secondary` | `#A1A1AA` | Body text |
+| `--color-text-muted` | `#71717A` | Labels, captions |
 
 **Fonts:**
 - `font-display` → Cal Sans SemiBold (headings)
@@ -267,26 +281,30 @@ Components install to `website/components/ui/`. Config in `website/components.js
 ### Component Dependency Tree
 
 ```
-page.tsx (Server Component)
-├── Navbar → GitHubStarButton
-├── Hero → ShimmerBadge, GradientText, TerminalBlock, DownloadButtonGroup, AnimatedGridPattern, Particles, GlowEffect
-├── Features → SectionWrapper, SectionHeading, MagicCard, IconBox
+page.tsx (Server Component — fetches stars + release via Promise.all)
+├── Navbar(stars) → GitHubStarButton, logo.svg
+├── Hero(release) → ShimmerBadge, GradientText, TerminalBlock, DownloadButtonGroup, AnimatedGridPattern, Particles, GlowEffect
+├── Features → SectionWrapper, SectionHeading, MagicCard(tilt+glass), IconBox
 ├── Architecture → SectionWrapper, SectionHeading, AnimatedBeam, BorderBeam, GlassmorphicCard, useMousePosition
-├── Performance → SectionWrapper, SectionHeading, AnimatedCounter, GlassmorphicCard
-├── Comparison → SectionWrapper, SectionHeading, Table, ScrollArea, GlassmorphicCard, ShineBorder
+├── Performance → SectionWrapper, SectionHeading, AnimatedCounter, GlassmorphicCard (responsive: horizontal desktop / vertical mobile)
+├── Comparison → SectionWrapper, SectionHeading, Table, ScrollArea(mobile only), GlassmorphicCard, ShineBorder
 ├── FAQ → SectionWrapper, SectionHeading, Accordion
 ├── SectionDivider (between each section)
-└── Footer → SectionDivider, Badge, GitHubStarButton
+└── Footer(stars) → SectionDivider, Badge, GitHubStarButton, Mumzworld branding
 ```
 
-### GitHub Stars (Server-Side Data)
+### GitHub Data (Server-Side Fetching)
 
-Stars are fetched server-side in `page.tsx` via `getGitHubStars()` and passed as props:
+Stars and latest release are fetched server-side in `page.tsx` via parallel API calls:
 
 ```tsx
 // website/app/page.tsx
-const stars = await getGitHubStars();
-// Passed to: <Navbar stars={stars} />, <Hero stars={stars} />, <Footer stars={stars} />
+const [stars, release] = await Promise.all([
+  getGitHubStars(),
+  getLatestRelease(),
+]);
+// stars → <Navbar stars={stars} />, <Footer stars={stars} />
+// release → <Hero release={release} />  (badge shows version or fallback)
 ```
 
-`getGitHubStars()` uses Next.js ISR with `revalidate: 3600` (1 hour).
+Both functions use Next.js ISR with `revalidate: 3600` (1 hour). `getLatestRelease()` returns `GitHubRelease | null` (graceful fallback).

@@ -16,7 +16,7 @@ export function GitHubStarButton({ stars, className }: GitHubStarButtonProps) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg border border-border-medium bg-glass px-4 py-2.5 text-sm font-medium text-text-primary backdrop-blur-md transition-all duration-300",
+        "inline-flex items-center gap-2 rounded-full border border-border-medium bg-glass px-5 py-3 text-base font-medium text-text-primary backdrop-blur-md transition-all duration-300",
         "hover:border-border-strong hover:bg-glass-light hover:shadow-[0_0_20px_rgba(255,153,0,0.08)]",
         className
       )}

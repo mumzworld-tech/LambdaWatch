@@ -15,6 +15,7 @@ export const NAV_LINKS = [
   { label: "Features", href: "#features" },
   { label: "Architecture", href: "#architecture" },
   { label: "Performance", href: "#performance" },
+  { label: "Compare", href: "#comparison" },
   { label: "FAQ", href: "#faq" },
 ] as const;
 
@@ -24,8 +25,9 @@ export const RELEASES_URL = `${GITHUB_URL}/releases`;
 
 // Hero
 export const HERO = {
-  badge: "Open Source Lambda Extension",
-  headlineWhite: "Ship Lambda Logs to",
+  badgeFallback: "Open Source Lambda Extension",
+  headlineWhite: "Fastest Way to Ship",
+  headlineMid: "Lambda Logs to",
   headlineGradient: "Grafana Loki",
   subtitle: "Zero code changes. Zero vendor lock-in. Just add the layer.",
   downloadCommand: `curl -sL https://github.com/${GITHUB_REPO}/releases/latest/download/extension-arm64.zip -o lambdawatch.zip`,

@@ -7,13 +7,19 @@ import { Comparison } from "@/components/sections/comparison";
 import { FAQ } from "@/components/sections/faq";
 import { Footer } from "@/components/sections/footer";
 import { SectionDivider } from "@/components/common";
+import { getGitHubStars, getLatestRelease } from "@/lib/github";
 
-export default function Home() {
+export default async function Home() {
+  const [stars, release] = await Promise.all([
+    getGitHubStars(),
+    getLatestRelease(),
+  ]);
+
   return (
     <>
-      <Navbar />
+      <Navbar stars={stars} />
       <main>
-        <Hero />
+        <Hero release={release} />
         <SectionDivider />
         <Features />
         <SectionDivider />
@@ -25,7 +31,7 @@ export default function Home() {
         <SectionDivider />
         <FAQ />
       </main>
-      <Footer />
+      <Footer stars={stars} />
     </>
   );
 }

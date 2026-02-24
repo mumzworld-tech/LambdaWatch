@@ -15,18 +15,18 @@ export function FAQ() {
     <SectionWrapper id="faq">
       <SectionHeading title="Frequently Asked Questions" />
       <BlurFade delay={0.2} inView>
-        <div className="mx-auto max-w-3xl">
-          <Accordion type="single" collapsible className="space-y-2">
+        <div className="mx-auto max-w-4xl">
+          <Accordion type="single" collapsible className="space-y-3">
             {FAQ_ITEMS.map((item, i) => (
               <AccordionItem
                 key={i}
                 value={`item-${i}`}
-                className="border-border-subtle rounded-lg bg-surface-light/30 px-6 data-[state=open]:bg-surface-light/50"
+                className="border-border-subtle rounded-lg bg-surface-light/30 px-6 md:px-8 data-[state=open]:bg-surface-light/50"
               >
-                <AccordionTrigger className="text-left text-text-primary hover:text-brand hover:no-underline py-5">
+                <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-text-primary hover:text-brand hover:no-underline py-5 md:py-6">
                   {item.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-text-secondary pb-5 leading-relaxed">
+                <AccordionContent className="text-sm md:text-base text-text-secondary pb-5 md:pb-6 leading-relaxed">
                   {item.answer}
                 </AccordionContent>
               </AccordionItem>

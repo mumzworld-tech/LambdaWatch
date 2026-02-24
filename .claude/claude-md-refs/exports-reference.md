@@ -114,7 +114,15 @@
 | `SubscribeRequest` | struct | SchemaVersion, Types, Buffering, Destination |
 | `BufferConfig` | struct | MaxItems, MaxBytes, TimeoutMs |
 | `Destination` | struct | Protocol, URI |
-| Event type constants | const | `platform.start`, `platform.runtimeDone`, `platform.report`, `function`, `extension`, etc. |
+| `EventTypePlatformStart` | const | `"platform.start"` — Lambda start event |
+| `EventTypePlatformEnd` | const | `"platform.end"` — Lambda end event |
+| `EventTypePlatformReport` | const | `"platform.report"` — Invocation metrics |
+| `EventTypePlatformRuntimeDone` | const | `"platform.runtimeDone"` — Triggers critical flush |
+| `EventTypePlatformFault` | const | `"platform.fault"` — Lambda fault |
+| `EventTypePlatformExtension` | const | `"platform.extension"` — Extension event |
+| `EventTypePlatformLogsDropped` | const | `"platform.logsDropped"` — Logs dropped |
+| `EventTypeFunction` | const | `"function"` — Function logs |
+| `EventTypeExtension` | const | `"extension"` — Extension logs |
 
 ### internal/logger
 
@@ -149,47 +157,49 @@
 
 | Module | File | Exports | Purpose |
 |--------|------|---------|---------|
-| constants | `website/lib/constants.ts` | NAV_LINKS, GITHUB_REPO, GITHUB_URL, RELEASES_URL, HERO, FEATURES (9), ARCHITECTURE_NODES (6), STATE_MACHINE (3), PERFORMANCE_METRICS (4), PERFORMANCE_CHART_DATA, COMPARISON_FEATURES (7), COMPARISON_PRODUCTS (4), FAQ_ITEMS (8), FOOTER_LINKS | All static content and configuration |
+| constants | `website/lib/constants.ts` | NAV_LINKS (5), GITHUB_REPO, GITHUB_URL, RELEASES_URL, HERO, FEATURES (9), ARCHITECTURE_NODES (6), STATE_MACHINE (3), PERFORMANCE_METRICS (4), PERFORMANCE_CHART_DATA (4), COMPARISON_FEATURES (7), COMPARISON_PRODUCTS (4), FAQ_ITEMS (8), FOOTER_LINKS | All static content and configuration |
 | fonts | `website/lib/fonts.ts` | calSans, inter, jetbrainsMono | Font configuration (Cal Sans local, Inter + JetBrains Mono Google) |
-| github | `website/lib/github.ts` | getGitHubStars() | Fetch GitHub star count (ISR: 3600s) |
+| github | `website/lib/github.ts` | getGitHubStars(), getLatestRelease(), GitHubRelease | Fetch GitHub stars + latest release (ISR: 3600s) |
 | utils | `website/lib/utils.ts` | cn() | clsx + tailwind-merge utility |
 
 ### Hooks
 
-| Hook | File | Purpose | Returns |
-|------|------|---------|---------|
-| useMousePosition | `website/hooks/use-mouse-position.ts` | Track mouse for 3D tilt effects | MotionValues: x, y, rotateX, rotateY |
-| useScrollProgress | `website/hooks/use-scroll-progress.ts` | Track scroll progress with fade/slide | ref, progress, opacity, y |
+| Hook | File | Parameters | Returns |
+|------|------|------------|---------|
+| useMousePosition | `use-mouse-position.ts` | `ref: RefObject, options?: { maxRotation?, springConfig? }` | `{ x, y, rotateX, rotateY }` (MotionValues) |
+| useScrollProgress | `use-scroll-progress.ts` | `options?: { offset? }` | `{ ref, progress, opacity, y }` (ref + MotionValues) |
 
 ### Section Components (`website/components/sections/`)
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| Navbar | `navbar.tsx` | Fixed header, nav links, mobile menu, GitHub stars, CTA |
+| Navbar | `navbar.tsx` | Floating glass morphism pill navbar, nav links, mobile menu, GitHub stars |
 | Hero | `hero.tsx` | Full-height hero: badge, headline, download buttons, terminal |
 | Features | `features.tsx` | 3-column grid of 9 feature cards with MagicCard |
 | Architecture | `architecture.tsx` | Data flow diagram with AnimatedBeam + state machine viz |
-| Performance | `performance.tsx` | Metrics grid + horizontal bar chart |
+| Performance | `performance.tsx` | Metrics grid + bar chart (horizontal desktop, vertical mobile) |
 | Comparison | `comparison.tsx` | Product comparison table (4 products, 7 features) |
 | FAQ | `faq.tsx` | Accordion with 8 FAQ items |
-| Footer | `footer.tsx` | 3-column footer: brand, resources, community |
+| Footer | `footer.tsx` | 3-column footer: brand, resources, community, Mumzworld branding |
 
 ### Common Components (`website/components/common/`)
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| SectionWrapper | `section-wrapper.tsx` | Responsive section container (max-w-7xl) |
-| SectionHeading | `section-heading.tsx` | Title + subtitle with BlurFade animation |
-| SectionDivider | `section-divider.tsx` | Gradient line divider between sections |
-| GlowEffect | `glow-effect.tsx` | Animated glow background (sm/md/lg) |
-| GlassmorphicCard | `glassmorphic-card.tsx` | Glass morphism card with backdrop blur |
-| GradientText | `gradient-text.tsx` | Gradient text with configurable from/to colors |
-| ShimmerBadge | `shimmer-badge.tsx` | Badge with animated shimmer text |
-| TerminalBlock | `terminal-block.tsx` | Terminal-like code block with copy button |
-| GitHubStarButton | `github-star-button.tsx` | GitHub star count display |
-| DownloadButtonGroup | `download-button-group.tsx` | ARM64/AMD64 download dropdown |
-| IconBox | `icon-box.tsx` | Icon container with gradient background (sm/md/lg) |
-| AnimatedCounter | `animated-counter.tsx` | Wraps NumberTicker with prefix/suffix |
+| Component | File | Key Props | Purpose |
+|-----------|------|-----------|---------|
+| SectionWrapper | `section-wrapper.tsx` | `id?, className?, fullWidth?` | Responsive section container (max-w-7xl, py-24 md:py-32) |
+| SectionHeading | `section-heading.tsx` | `title, subtitle?, align?("left"\|"center")` | Title + subtitle with BlurFade animation |
+| SectionDivider | `section-divider.tsx` | `className?` | Gradient line divider between sections |
+| GlowEffect | `glow-effect.tsx` | `size?("sm"\|"md"\|"lg"), className?` | Animated glow background (300-700px) |
+| GlassmorphicCard | `glassmorphic-card.tsx` | `children, className?, hover?` | Glass morphism card with backdrop blur |
+| GradientText | `gradient-text.tsx` | `from?, via?, to?, gradient?` | Gradient text (use `gradient` for full string or `from/via/to` for Tailwind) |
+| ShimmerBadge | `shimmer-badge.tsx` | `children, href?, className?` | Badge with pulsing green dot, optional link |
+| TerminalBlock | `terminal-block.tsx` | `command, className?` | Terminal-like code block with copy button |
+| GitHubStarButton | `github-star-button.tsx` | `stars?, className?` | GitHub star count pill button |
+| DownloadButtonGroup | `download-button-group.tsx` | `className?` | ARM64/AMD64 download dropdown |
+| IconBox | `icon-box.tsx` | `icon: LucideIcon, size?("sm"\|"md"\|"lg")` | Icon container with gradient background |
+| AnimatedCounter | `animated-counter.tsx` | `value, prefix?, suffix?, className?` | Wraps NumberTicker with prefix/suffix |
+
+All common components are barrel-exported from `website/components/common/index.ts`.
 
 ### UI Components (`website/components/ui/`) — shadcn + custom
 
@@ -199,7 +209,7 @@
 |-----------|------|-------------|
 | Accordion | `accordion.tsx` | Accordion, AccordionItem, AccordionTrigger, AccordionContent |
 | Badge | `badge.tsx` | Badge, badgeVariants (default/secondary/destructive/outline/ghost/link) |
-| Button | `button.tsx` | Button, buttonVariants (default/destructive/outline/secondary/ghost/link, sizes: xs/sm/default/lg/icon) |
+| Button | `button.tsx` | Button, buttonVariants (default/destructive/outline/secondary/ghost/link, sizes: xs/sm/default/lg/xl/icon/icon-xs) |
 | Card | `card.tsx` | Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter |
 | Chart | `chart.tsx` | ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent |
 | DropdownMenu | `dropdown-menu.tsx` | DropdownMenu + 15 sub-components |
@@ -219,7 +229,7 @@
 | AnimatedShinyText | `animated-shiny-text.tsx` | shimmerWidth | Shimmer text effect |
 | BlurFade | `blur-fade.tsx` | duration, delay, offset, direction, inView, blur | Scroll-triggered blur+fade |
 | BorderBeam | `border-beam.tsx` | size, duration, delay, colors, reverse, borderWidth | Animated border effect |
-| MagicCard | `magic-card.tsx` | gradientSize, gradientColor, gradientOpacity | Mouse-tracking gradient card |
+| MagicCard | `magic-card.tsx` | gradientSize, gradientColor, gradientFrom, gradientTo, gradientOpacity, tilt, tiltAmount | Mouse-tracking gradient card with optional 3D tilt |
 | Marquee | `marquee.tsx` | reverse, pauseOnHover, vertical, repeat | Scrolling content |
 | NumberTicker | `number-ticker.tsx` | value, startValue, direction, delay, decimalPlaces | Spring-animated counter |
 | Particles | `particles.tsx` | quantity, staticity, ease, size, color, vx, vy | Canvas particle system |
@@ -243,7 +253,7 @@ import { useScrollProgress } from "@/hooks/use-scroll-progress";
 // Lib
 import { FEATURES, HERO, NAV_LINKS } from "@/lib/constants";
 import { calSans, inter, jetbrainsMono } from "@/lib/fonts";
-import { getGitHubStars } from "@/lib/github";
+import { getGitHubStars, getLatestRelease } from "@/lib/github";
 import { cn } from "@/lib/utils";
 
 // External

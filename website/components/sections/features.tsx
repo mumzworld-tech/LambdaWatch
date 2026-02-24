@@ -16,12 +16,14 @@ export function Features() {
         {FEATURES.map((feature, i) => (
           <BlurFade key={feature.title} delay={0.1 + i * 0.05} inView>
             <MagicCard
-              className="h-full rounded-xl border border-border-subtle"
+              className="h-full rounded-xl border border-border-subtle bg-glass backdrop-blur-md"
               gradientColor="rgba(255, 153, 0, 0.08)"
               gradientFrom="#FF9900"
               gradientTo="#CC7A00"
-              gradientOpacity={0.6}
-              gradientSize={250}
+              gradientOpacity={0.8}
+              gradientSize={300}
+              tilt
+              tiltAmount={5}
             >
               <div className="p-6">
                 <IconBox icon={feature.icon} className="mb-4" />

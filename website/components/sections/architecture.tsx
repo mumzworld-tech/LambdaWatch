@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { motion } from "motion/react";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -125,34 +125,40 @@ export function Architecture() {
               </div>
 
               {/* Nodes: horizontal on desktop, 2-col grid on mobile */}
-              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:flex-nowrap md:justify-between">
+              <div className="flex flex-col items-center gap-6 md:flex-row md:flex-nowrap md:justify-between">
                 {ARCHITECTURE_NODES.map((node, i) => (
-                  <ArchitectureNode
-                    key={node.id}
-                    label={node.label}
-                    icon={node.icon}
-                    nodeRef={nodeRefs[i]}
-                  />
+                  <React.Fragment key={node.id}>
+                    <ArchitectureNode
+                      label={node.label}
+                      icon={node.icon}
+                      nodeRef={nodeRefs[i]}
+                    />
+                    {i < ARCHITECTURE_NODES.length - 1 && (
+                      <div className="h-6 w-px bg-border-medium md:hidden" />
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
 
-              {/* Animated beams connecting sequential nodes */}
-              {nodeRefs.slice(0, -1).map((fromRef, i) => (
-                <AnimatedBeam
-                  key={`beam-${i}`}
-                  containerRef={containerRef}
-                  fromRef={fromRef}
-                  toRef={nodeRefs[i + 1]}
-                  pathColor="rgba(255, 153, 0, 0.15)"
-                  pathWidth={2}
-                  pathOpacity={0.3}
-                  gradientStartColor="#FF9900"
-                  gradientStopColor="#CC7A00"
-                  duration={4 + i * 0.5}
-                  delay={i * 0.3}
-                  curvature={0}
-                />
-              ))}
+              {/* Animated beams connecting sequential nodes - desktop only */}
+              <div className="hidden md:block">
+                {nodeRefs.slice(0, -1).map((fromRef, i) => (
+                  <AnimatedBeam
+                    key={`beam-${i}`}
+                    containerRef={containerRef}
+                    fromRef={fromRef}
+                    toRef={nodeRefs[i + 1]}
+                    pathColor="rgba(255, 153, 0, 0.15)"
+                    pathWidth={2}
+                    pathOpacity={0.3}
+                    gradientStartColor="#FF9900"
+                    gradientStopColor="#CC7A00"
+                    duration={3}
+                    delay={i * 0.6}
+                    curvature={0}
+                  />
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>

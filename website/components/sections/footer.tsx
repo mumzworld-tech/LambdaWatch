@@ -2,26 +2,32 @@ import { Badge } from "@/components/ui/badge";
 import { SectionDivider, GitHubStarButton } from "@/components/common";
 import { FOOTER_LINKS } from "@/lib/constants";
 
-export function Footer() {
+interface FooterProps {
+  stars?: number | null;
+}
+
+export function Footer({ stars }: FooterProps) {
   return (
     <footer className="relative">
       <SectionDivider />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {/* Branding */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 text-center md:text-left">
             <span className="font-bold text-2xl text-brand">
               LambdaWatch
             </span>
-            <p className="mt-3 text-sm text-text-muted max-w-xs">
+            <p className="mt-3 text-sm text-text-muted max-w-xs mx-auto md:mx-0">
               Ship Lambda logs to Grafana Loki in real-time. Zero code changes.
               Zero vendor lock-in.
             </p>
+
+            <GitHubStarButton stars={stars} className="mt-6" />
           </div>
 
           {/* Links */}
           <div className="grid grid-cols-2 gap-8 md:col-span-2">
-            <div>
+            <div className="text-center md:text-left">
               <h3 className="text-sm font-semibold text-text-primary mb-4">
                 Resources
               </h3>
@@ -40,7 +46,7 @@ export function Footer() {
                 ))}
               </ul>
             </div>
-            <div>
+            <div className="text-center md:text-left">
               <h3 className="text-sm font-semibold text-text-primary mb-4">
                 Community
               </h3>
@@ -63,8 +69,8 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm text-text-muted">
               Built with Go. Pure standard library.
             </span>
@@ -75,7 +81,24 @@ export function Footer() {
               MIT
             </Badge>
           </div>
-          <GitHubStarButton />
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            <a
+              href="https://mumzworld.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors"
+            >
+              <span>Built by</span>
+              <span className="h-7 shrink-0 inline-flex items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/mumzworld-logo.gif"
+                  alt="Mumzworld"
+                  className="h-full w-auto object-contain"
+                />
+              </span>
+            </a>
+          </div>
         </div>
       </div>
     </footer>

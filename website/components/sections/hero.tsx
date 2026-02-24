@@ -13,8 +13,19 @@ import {
 } from "@/components/common";
 import { HERO, RELEASES_URL } from "@/lib/constants";
 import { ExternalLink } from "lucide-react";
+import type { GitHubRelease } from "@/lib/github";
 
-export function Hero() {
+interface HeroProps {
+  release?: GitHubRelease | null;
+}
+
+export function Hero({ release }: HeroProps) {
+  const badgeContent = release?.tagName
+    ? `${release.tagName} — Check what's new`
+    : HERO.badgeFallback;
+
+  const badgeHref = release?.htmlUrl ?? undefined;
+
   return (
     <section
       id="hero"
@@ -42,34 +53,38 @@ export function Hero() {
       />
 
       {/* Content */}
-      <div className="relative z-10 flex max-w-4xl flex-col items-center text-center">
+      <div className="relative z-10 flex max-w-full flex-col items-center px-4 text-center sm:max-w-4xl">
         <BlurFade delay={0} inView>
-          <ShimmerBadge>{HERO.badge}</ShimmerBadge>
+          <ShimmerBadge href={badgeHref}>{badgeContent}</ShimmerBadge>
         </BlurFade>
 
         <BlurFade delay={0.1} inView>
-          <h1 className="mt-8 font-black text-5xl leading-[1.1] tracking-tight sm:text-6xl md:text-7xl lg:text-[5.5rem]">
+          <h1 className="mt-8 font-black text-4xl leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
             <span className="text-text-primary">{HERO.headlineWhite}</span>
             <br />
-            <GradientText>{HERO.headlineGradient}</GradientText>
+            <span className="text-text-primary">{HERO.headlineMid}</span>
+            <br />
+            <GradientText gradient="from-brand via-[#FF6B00] to-[#FF3D00]">
+              {HERO.headlineGradient}
+            </GradientText>
           </h1>
         </BlurFade>
 
         <BlurFade delay={0.2} inView>
-          <p className="mt-6 max-w-2xl text-lg text-text-secondary md:text-xl">
+          <p className="mt-6 max-w-2xl px-4 text-lg text-text-secondary md:text-xl">
             {HERO.subtitle}
           </p>
         </BlurFade>
 
         <BlurFade delay={0.3} inView>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap">
             <DownloadButtonGroup />
             <GitHubStarButton />
             <a
               href={RELEASES_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+              className="inline-flex items-center gap-2 rounded-lg px-5 py-3 text-base font-medium text-text-secondary transition-colors hover:text-text-primary"
             >
               View Releases
               <ExternalLink className="h-4 w-4" />
@@ -78,7 +93,7 @@ export function Hero() {
         </BlurFade>
 
         <BlurFade delay={0.4} inView>
-          <div className="mt-12 w-full max-w-2xl">
+          <div className="mt-12 w-full max-w-[calc(100vw-2rem)] overflow-x-auto sm:max-w-2xl">
             <TerminalBlock command={HERO.downloadCommand} />
           </div>
         </BlurFade>

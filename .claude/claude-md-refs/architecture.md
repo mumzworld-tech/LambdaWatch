@@ -151,6 +151,37 @@ Synchronization:
   - stopFlush (chan)            → shutdown signal to flush loop
 ```
 
+## Package Dependency Graph
+
+```
+cmd/extension/main.go
+├── internal/config       ← Load()
+├── internal/extension    ← NewManager(), Manager.Run()
+└── internal/logger       ← Init(), Fatalf()
+
+internal/extension/lifecycle.go
+├── internal/buffer       ← Buffer operations
+├── internal/config       ← Config struct
+├── internal/logger       ← Info/Debug/Error logging
+├── internal/loki         ← Client, Batch, PushRequest
+└── internal/telemetryapi ← Server, Client
+
+internal/telemetryapi/server.go
+├── internal/buffer       ← LogEntry, AddBatch()
+└── internal/logger       ← Debug logging
+
+internal/loki/client.go
+└── internal/config       ← Config struct
+
+internal/loki/batch.go
+└── internal/buffer       ← LogEntry
+
+internal/logger/logger.go
+└── internal/buffer       ← Add(), SignalReady()
+```
+
+No external dependencies — pure Go standard library throughout.
+
 ## Key Design Decisions
 
 1. **Request ID as content, not label**: Injected into message body (`{"request_id":"..."}` for JSON, `[request_id=...] ` for text) to avoid high-cardinality Loki labels. Query: `{function_name="x"} | json | request_id="abc"`.
@@ -185,8 +216,8 @@ Synchronization:
 
 ```
 Server Components (SSR/Build Time)
-├── layout.tsx    → Font loading, metadata, HTML structure
-└── page.tsx      → Data fetching (getGitHubStars), section composition
+├── layout.tsx    → Font loading, metadata, favicon, HTML structure
+└── page.tsx      → Data fetching (getGitHubStars + getLatestRelease), section composition
 
 Client Components ("use client")
 ├── sections/     → Interactive page sections (animations, scroll, mouse tracking)
@@ -200,12 +231,13 @@ Client Components ("use client")
 
 - **Static Export**: `output: "export"` — all pages pre-rendered at build time
 - **No SSR/ISR at runtime**: Pure static HTML + JS bundles
-- **GitHub stars**: Fetched at build time, cached for 1 hour (only matters during build)
+- **GitHub data**: Stars + latest release fetched at build time via `Promise.all`, cached 1 hour
 - **No API routes**: Static site, no server-side endpoints
 
 ### Style System
 
 - **Dark-only theme**: oklch() color space in CSS custom properties
-- **Glass morphism**: Backdrop blur + semi-transparent backgrounds
-- **Gradient effects**: Brand green → blue gradients on text and borders
+- **Glass morphism**: Backdrop blur + semi-transparent backgrounds (navbar, feature cards)
+- **Gradient effects**: Warm spectrum (brand → #FF6B00 → #FF3D00) on hero text, brand gradients on borders
+- **3D effects**: Mouse-tracking tilt on feature cards via motion/react spring values
 - **Animation layers**: Background particles + grid pattern + glow effects
