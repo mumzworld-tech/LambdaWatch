@@ -178,9 +178,9 @@ export function Architecture() {
           </div>
 
           {/* State pills with transitions */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
             {STATE_MACHINE.map((item, i) => (
-              <div key={item.state} className="flex items-center gap-3 sm:gap-4">
+              <React.Fragment key={item.state}>
                 <GlassmorphicCard
                   className={cn(
                     "!rounded-full !px-5 !py-2.5 !border flex items-center gap-3",
@@ -233,7 +233,7 @@ export function Architecture() {
                     <ArrowDown className="h-3.5 w-3.5 text-text-muted/60 sm:hidden" />
                   </div>
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
 
