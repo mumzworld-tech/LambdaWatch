@@ -20,36 +20,27 @@ export function Navbar({ stars }: NavbarProps) {
   const shadow = useTransform(
     scrollY,
     [0, 100],
-    [
-      "0 0 0 0 rgba(0,0,0,0)",
-      "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,153,0,0.06)",
-    ]
+    ["0 0 0 0 rgba(0,0,0,0)", "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,153,0,0.06)"],
   );
 
-  const handleNavClick = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-      e.preventDefault();
-      setMobileOpen(false);
-      const target = document.querySelector(href);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth" });
-      }
-    },
-    []
-  );
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    setMobileOpen(false);
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
 
   return (
     <>
       <motion.header
         className={cn(
           "fixed top-3 sm:top-4 left-1/2 z-50 py-3 max-w-5xl w-[calc(100%-2rem)] -translate-x-1/2 rounded-2xl",
-          "bg-clip-padding backdrop-filter backdrop-blur-xl"
+          "bg-clip-padding backdrop-filter backdrop-blur-xl",
         )}
         style={{
-          border: useTransform(
-            borderOpacity,
-            (v) => `1px solid rgba(255, 153, 0, ${v})`
-          ),
+          border: useTransform(borderOpacity, (v) => `1px solid rgba(255, 153, 0, ${v})`),
           boxShadow: shadow,
         }}
       >
@@ -63,15 +54,13 @@ export function Navbar({ stars }: NavbarProps) {
             }}
             className="flex items-center gap-2 font-bold text-lg text-brand transition-opacity hover:opacity-80"
           >
-            <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-surface-lighter border border-border-subtle">
-              <Image
-                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.png`}
-                alt="LambdaWatch logo"
-                className="h-5 w-5"
-                width={20}
-                height={20}
-              />
-            </div>
+            <Image
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.png`}
+              alt="LambdaWatch logo"
+              className="h-8 w-8"
+              width={20}
+              height={20}
+            />
             <span>LambdaWatch</span>
           </a>
 
