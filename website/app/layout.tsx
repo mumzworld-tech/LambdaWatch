@@ -5,6 +5,7 @@ import "./globals.css";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(`https://mumzworld-tech.github.io${basePath}`),
   title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
   description:
     "Zero-dependency AWS Lambda Extension that ships function logs to Grafana Loki in real-time. Zero code changes. Zero vendor lock-in. Just add the layer.",
@@ -29,13 +30,13 @@ export const metadata: Metadata = {
     url: "https://github.com/mumzworld-tech/LambdaWatch",
     siteName: "LambdaWatch",
     type: "website",
-    images: [{ url: `${basePath}/thumbnail.png`, alt: "LambdaWatch" }],
+    images: [{ url: "/thumbnail.png", alt: "LambdaWatch" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
     description: "Zero-dependency AWS Lambda Extension. Zero code changes. Zero vendor lock-in.",
-    images: [`${basePath}/thumbnail.png`],
+    images: ["/thumbnail.png"],
   },
   robots: {
     index: true,
