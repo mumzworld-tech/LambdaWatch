@@ -65,7 +65,7 @@ export function Navbar({ stars }: NavbarProps) {
           >
             <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-surface-lighter border border-border-subtle">
               <Image
-                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`}
+                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.png`}
                 alt="LambdaWatch logo"
                 className="h-5 w-5"
                 width={20}
@@ -129,7 +129,7 @@ export function Navbar({ stars }: NavbarProps) {
               >
                 <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-surface-lighter border border-border-subtle">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`}
+                    src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.png`}
                     alt="LambdaWatch logo"
                     className="h-5 w-5"
                     width={20}

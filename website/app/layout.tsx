@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "Lambda Layer",
   ],
   authors: [{ name: "Mumzworld Tech" }],
-  icons: { icon: `${basePath}/icon.svg`, apple: `${basePath}/icon.svg`, shortcut: `${basePath}/icon.svg` },
+  icons: { icon: `${basePath}/logo.png`, apple: `${basePath}/logo.png`, shortcut: `${basePath}/logo.png` },
   openGraph: {
     title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
     description:
