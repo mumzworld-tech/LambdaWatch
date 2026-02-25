@@ -41,6 +41,8 @@ Lefthook runs `go fmt` and `golangci-lint` on pre-commit (configured in `lefthoo
 
 Push to `main` triggers `.github/workflows/release.yml` which runs tests, lints, builds both architectures, and creates a GitHub release with layer zip artifacts.
 
+Push to `website` (paths: `website/**`) triggers `.github/workflows/deploy-website.yml` which builds the static site (`pnpm build:ghpages`) and deploys to GitHub Pages.
+
 ## Architecture
 
 ### Data Flow
