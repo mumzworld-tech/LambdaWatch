@@ -3,12 +3,14 @@ import { calSans, inter, jetbrainsMono } from "@/lib/fonts";
 import "./globals.css";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const title = "LambdaWatch - Fastest Way to Ship Lambda Logs to Grafana Loki";
+const description =
+  "High-performance AWS Lambda Extension written in Go that automatically captures and ships logs to Grafana Loki. Features automatic batching, gzip compression, request ID tracking, and guaranteed delivery.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`https://mumzworld-tech.github.io${basePath}`),
-  title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
-  description:
-    "Zero-dependency AWS Lambda Extension that ships function logs to Grafana Loki in real-time. Zero code changes. Zero vendor lock-in. Just add the layer.",
+  title: title,
+  description: description,
   keywords: [
     "AWS Lambda",
     "Grafana Loki",
@@ -24,18 +26,18 @@ export const metadata: Metadata = {
   authors: [{ name: "Mumzworld Tech" }],
   icons: { icon: `${basePath}/logo.png`, apple: `${basePath}/logo.png`, shortcut: `${basePath}/logo.png` },
   openGraph: {
-    title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
-    description:
-      "Zero-dependency AWS Lambda Extension that ships function logs to Grafana Loki in real-time. Zero code changes. Zero vendor lock-in.",
+    type: "website",
+    locale: "en_US",
+    title: title,
+    description: description,
     url: "https://github.com/mumzworld-tech/LambdaWatch",
     siteName: "LambdaWatch",
-    type: "website",
     images: [{ url: "/thumbnail.png", alt: "LambdaWatch" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
-    description: "Zero-dependency AWS Lambda Extension. Zero code changes. Zero vendor lock-in.",
+    title: title,
+    description: description,
     images: ["/thumbnail.png"],
   },
   robots: {
