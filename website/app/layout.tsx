@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { calSans, inter, jetbrainsMono } from "@/lib/fonts";
 import "./globals.css";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export const metadata: Metadata = {
   title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
   description:
@@ -19,21 +21,21 @@ export const metadata: Metadata = {
     "Lambda Layer",
   ],
   authors: [{ name: "Mumzworld Tech" }],
-  icons: { icon: "/icon.svg", apple: "/icon.svg", shortcut: "/icon.svg" },
+  icons: { icon: `${basePath}/icon.svg`, apple: `${basePath}/icon.svg`, shortcut: `${basePath}/icon.svg` },
   openGraph: {
     title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
     description:
       "Zero-dependency AWS Lambda Extension that ships function logs to Grafana Loki in real-time. Zero code changes. Zero vendor lock-in.",
-    url: "https://github.com/mumzworld-tech/lambdawatch",
+    url: "https://github.com/mumzworld-tech/LambdaWatch",
     siteName: "LambdaWatch",
     type: "website",
-    images: [{ url: "/thumbnail.png", alt: "LambdaWatch" }],
+    images: [{ url: `${basePath}/thumbnail.png`, alt: "LambdaWatch" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
     description: "Zero-dependency AWS Lambda Extension. Zero code changes. Zero vendor lock-in.",
-    images: ["/thumbnail.png"],
+    images: [`${basePath}/thumbnail.png`],
   },
   robots: {
     index: true,

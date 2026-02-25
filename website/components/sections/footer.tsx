@@ -92,7 +92,7 @@ export function Footer({ stars }: FooterProps) {
               <span>Built by</span>
               <span className="h-7 shrink-0 inline-flex items-center">
                 <Image
-                  src="/mumzworld-logo.gif"
+                  src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/mumzworld-logo.gif`}
                   alt="Mumzworld"
                   className="h-full w-auto object-contain"
                   width={100}

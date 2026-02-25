@@ -43,7 +43,7 @@ export function DownloadButtonGroup({ className }: DownloadButtonGroupProps) {
         >
           <DropdownMenuItem asChild>
             <a
-              href={`${DOWNLOAD_BASE}/extension-arm64.zip`}
+              href={`${DOWNLOAD_BASE}/lambdawatch-layer-arm64.zip`}
               className="cursor-pointer gap-3 py-3 px-4 text-base rounded-lg"
             >
               <Cpu className="h-5 w-5 text-brand" />
@@ -60,7 +60,7 @@ export function DownloadButtonGroup({ className }: DownloadButtonGroupProps) {
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <a
-              href={`${DOWNLOAD_BASE}/extension-amd64.zip`}
+              href={`${DOWNLOAD_BASE}/lambdawatch-layer-amd64.zip`}
               className="cursor-pointer gap-3 py-3 px-4 text-base rounded-lg"
             >
               <Cpu className="h-5 w-5 text-text-muted" />

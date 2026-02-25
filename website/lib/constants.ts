@@ -19,7 +19,7 @@ export const NAV_LINKS = [
   { label: "FAQ", href: "#faq" },
 ] as const;
 
-export const GITHUB_REPO = "mumzworld-tech/lambdawatch";
+export const GITHUB_REPO = "mumzworld-tech/LambdaWatch";
 export const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 export const RELEASES_URL = `${GITHUB_URL}/releases`;
 
@@ -30,7 +30,7 @@ export const HERO = {
   headlineMid: "Lambda Logs to",
   headlineGradient: "Grafana Loki",
   subtitle: "Zero code changes. Zero vendor lock-in. Just add the layer.",
-  downloadCommand: `curl -sL https://github.com/${GITHUB_REPO}/releases/latest/download/extension-arm64.zip -o lambdawatch.zip`,
+  downloadCommand: `curl -sL https://github.com/${GITHUB_REPO}/releases/latest/download/lambdawatch-layer-arm64.zip -o lambdawatch.zip`,
 } as const;
 
 // Features (9 items for 3x3 grid)
