@@ -147,13 +147,19 @@
 
 | Route | File | Type | Purpose |
 |-------|------|------|---------|
-| `/` | `website/app/page.tsx` | Server Component | Home page — renders all 8 sections |
+| `/` | `website/app/page.tsx` | Server Component | Home page — fetches GitHub data, delegates to GitHubDataWrapper |
 
 ### Layouts
 
 | Layout | File | Scope |
 |--------|------|-------|
 | Root | `website/app/layout.tsx` | All pages — fonts, metadata, dark mode |
+
+### Wrapper Components (`website/components/`)
+
+| Component | File | Key Props | Purpose |
+|-----------|------|-----------|---------|
+| GitHubDataWrapper | `github-data-wrapper.tsx` | `initialStars: number \| null, initialRelease: GitHubRelease \| null` | Client component: composes all sections, refreshes GitHub data client-side on mount |
 
 ### Library Modules
 

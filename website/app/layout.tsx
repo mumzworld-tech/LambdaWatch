@@ -4,7 +4,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
-  description: "Zero-dependency AWS Lambda Extension that ships function logs to Grafana Loki in real-time. Zero code changes. Zero vendor lock-in. Just add the layer.",
+  description:
+    "Zero-dependency AWS Lambda Extension that ships function logs to Grafana Loki in real-time. Zero code changes. Zero vendor lock-in. Just add the layer.",
   keywords: [
     "AWS Lambda",
     "Grafana Loki",
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
     "Lambda Layer",
   ],
   authors: [{ name: "Mumzworld Tech" }],
-  icons: { icon: "/icon.svg" },
+  icons: { icon: "/icon.svg", apple: "/icon.svg", shortcut: "/icon.svg" },
   openGraph: {
     title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
     description:
@@ -26,11 +27,13 @@ export const metadata: Metadata = {
     url: "https://github.com/mumzworld-tech/lambdawatch",
     siteName: "LambdaWatch",
     type: "website",
+    images: [{ url: "/thumbnail.png", alt: "LambdaWatch" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "LambdaWatch - Ship Lambda Logs to Grafana Loki",
     description: "Zero-dependency AWS Lambda Extension. Zero code changes. Zero vendor lock-in.",
+    images: ["/thumbnail.png"],
   },
   robots: {
     index: true,

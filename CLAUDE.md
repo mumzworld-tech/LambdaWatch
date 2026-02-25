@@ -97,6 +97,7 @@ cd website
 pnpm install        # Install dependencies
 pnpm dev            # Dev server (localhost:3000)
 pnpm build          # Static export build
+pnpm build:ghpages  # Build for GitHub Pages (with basePath)
 pnpm lint           # ESLint
 ```
 
@@ -105,6 +106,7 @@ pnpm lint           # ESLint
 | Directory | Purpose |
 |-----------|---------|
 | `website/app/` | Next.js App Router (single page: `/`) |
+| `website/components/github-data-wrapper.tsx` | Client wrapper: composes all sections, refreshes GitHub data client-side |
 | `website/components/sections/` | 8 page sections: Navbar (floating glass pill), Hero, Features, Architecture, Performance, Comparison, FAQ, Footer |
 | `website/components/common/` | 12 shared components: SectionWrapper, SectionHeading, GlassmorphicCard, etc. |
 | `website/components/ui/` | 24 shadcn + animation components |

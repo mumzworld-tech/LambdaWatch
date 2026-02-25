@@ -128,7 +128,7 @@ pnpm build          # Static export build
 pnpm lint           # ESLint check
 ```
 
-**Key config:** Static export (`output: "export"` in next.config.ts), unoptimized images, Tailwind CSS 4 with @tailwindcss/postcss.
+**Key config:** Static export (`output: "export"` in next.config.ts), dynamic `basePath` via `NEXT_PUBLIC_BASE_PATH` env var, unoptimized images, Tailwind CSS 4 with @tailwindcss/postcss. GitHub Pages build: `pnpm build:ghpages`.
 
 ### Adding a New Page Section
 
@@ -155,21 +155,15 @@ export function NewSection() {
 }
 ```
 
-2. Add to page in `website/app/page.tsx`:
+2. Add to `website/components/github-data-wrapper.tsx` (the client wrapper that composes all sections):
 ```tsx
 import { NewSection } from "@/components/sections/new-section";
 
-export default async function Home() {
-  return (
-    <main>
-      {/* existing sections */}
-      <SectionDivider />
-      <NewSection />
-      {/* more sections */}
-    </main>
-  );
-}
+// Inside GitHubDataWrapper return JSX, add between existing sections:
+<SectionDivider />
+<NewSection />
 ```
+Note: `page.tsx` only handles server-side data fetching — all section composition lives in `GitHubDataWrapper`.
 
 3. Add nav link in `website/lib/constants.ts` (NAV_LINKS array):
 ```typescript
@@ -282,29 +276,23 @@ Components install to `website/components/ui/`. Config in `website/components.js
 
 ```
 page.tsx (Server Component — fetches stars + release via Promise.all)
-├── Navbar(stars) → GitHubStarButton, logo.svg
-├── Hero(release) → ShimmerBadge, GradientText, TerminalBlock, DownloadButtonGroup, AnimatedGridPattern, Particles, GlowEffect
-├── Features → SectionWrapper, SectionHeading, MagicCard(tilt+glass), IconBox
-├── Architecture → SectionWrapper, SectionHeading, AnimatedBeam, BorderBeam, GlassmorphicCard, useMousePosition
-├── Performance → SectionWrapper, SectionHeading, AnimatedCounter, GlassmorphicCard (responsive: horizontal desktop / vertical mobile)
-├── Comparison → SectionWrapper, SectionHeading, Table, ScrollArea(mobile only), GlassmorphicCard, ShineBorder
-├── FAQ → SectionWrapper, SectionHeading, Accordion
-├── SectionDivider (between each section)
-└── Footer(stars) → SectionDivider, Badge, GitHubStarButton, Mumzworld branding
+└── GitHubDataWrapper(initialStars, initialRelease) — Client Component
+    ├── useEffect → client-side fetch to refresh stars + release
+    ├── Navbar(stars) → GitHubStarButton, logo.svg
+    ├── Hero(release) → ShimmerBadge, GradientText, TerminalBlock, DownloadButtonGroup, AnimatedGridPattern, Particles, GlowEffect
+    ├── Features → SectionWrapper, SectionHeading, MagicCard(tilt+glass), IconBox
+    ├── Architecture → SectionWrapper, SectionHeading, AnimatedBeam, BorderBeam, GlassmorphicCard, useMousePosition
+    ├── Performance → SectionWrapper, SectionHeading, AnimatedCounter, GlassmorphicCard (responsive: horizontal desktop / vertical mobile)
+    ├── Comparison → SectionWrapper, SectionHeading, Table, ScrollArea(mobile only), GlassmorphicCard, ShineBorder
+    ├── FAQ → SectionWrapper, SectionHeading, Accordion
+    ├── SectionDivider (between each section)
+    └── Footer(stars) → SectionDivider, Badge, GitHubStarButton, Mumzworld branding
 ```
 
-### GitHub Data (Server-Side Fetching)
+### GitHub Data (Dual-Fetch Pattern)
 
-Stars and latest release are fetched server-side in `page.tsx` via parallel API calls:
+**Server-side (build time):** `page.tsx` fetches initial data via `getGitHubStars()` + `getLatestRelease()` with `Promise.all`, then passes to `GitHubDataWrapper` as `initialStars`/`initialRelease` props.
 
-```tsx
-// website/app/page.tsx
-const [stars, release] = await Promise.all([
-  getGitHubStars(),
-  getLatestRelease(),
-]);
-// stars → <Navbar stars={stars} />, <Footer stars={stars} />
-// release → <Hero release={release} />  (badge shows version or fallback)
-```
+**Client-side (mount):** `GitHubDataWrapper` re-fetches from GitHub API via `useEffect` to get fresh data after static build. Falls back to server-side values on error.
 
-Both functions use Next.js ISR with `revalidate: 3600` (1 hour). `getLatestRelease()` returns `GitHubRelease | null` (graceful fallback).
+`getLatestRelease()` returns `GitHubRelease | null` (graceful fallback).

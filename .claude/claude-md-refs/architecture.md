@@ -25,9 +25,10 @@ LambdaWatch/
 ├── website/                        # Next.js marketing site
 │   ├── app/
 │   │   ├── layout.tsx             # Root layout (fonts, metadata)
-│   │   ├── page.tsx               # Home page (all sections)
+│   │   ├── page.tsx               # Home page (server fetch → GitHubDataWrapper)
 │   │   └── globals.css            # Theme + animations
 │   ├── components/
+│   │   ├── github-data-wrapper.tsx # Client wrapper: sections + client-side data refresh
 │   │   ├── sections/              # Page sections (8)
 │   │   ├── common/                # Shared components (12)
 │   │   └── ui/                    # shadcn + animation components (24)
@@ -216,22 +217,26 @@ No external dependencies — pure Go standard library throughout.
 
 ```
 Server Components (SSR/Build Time)
-├── layout.tsx    → Font loading, metadata, favicon, HTML structure
-└── page.tsx      → Data fetching (getGitHubStars + getLatestRelease), section composition
+├── layout.tsx              → Font loading, metadata, favicon, HTML structure
+└── page.tsx                → Data fetching (getGitHubStars + getLatestRelease)
+                               └── passes initialStars/initialRelease to GitHubDataWrapper
 
 Client Components ("use client")
-├── sections/     → Interactive page sections (animations, scroll, mouse tracking)
-├── common/       → Reusable building blocks (wrappers, cards, badges)
-└── ui/           → Primitive components (buttons, accordion, effects)
+├── github-data-wrapper.tsx → Receives server data as props, refreshes via client-side fetch
+│   └── Composes all sections: Navbar, Hero, Features, ..., Footer
+├── sections/               → Interactive page sections (animations, scroll, mouse tracking)
+├── common/                 → Reusable building blocks (wrappers, cards, badges)
+└── ui/                     → Primitive components (buttons, accordion, effects)
 ```
 
-**Design pattern**: Page is a Server Component that fetches data and composes Client Components. All interactivity (animation, scroll tracking, mouse position) happens client-side.
+**Design pattern**: Page is a Server Component that fetches initial GitHub data and passes it to `GitHubDataWrapper` (Client Component). The wrapper hydrates with server data, then refreshes via client-side GitHub API fetch on mount. All interactivity (animation, scroll tracking, mouse position) happens client-side.
 
 ### Rendering Strategy
 
 - **Static Export**: `output: "export"` — all pages pre-rendered at build time
+- **Dynamic basePath**: `NEXT_PUBLIC_BASE_PATH` env var (used for GitHub Pages deployment)
 - **No SSR/ISR at runtime**: Pure static HTML + JS bundles
-- **GitHub data**: Stars + latest release fetched at build time via `Promise.all`, cached 1 hour
+- **GitHub data (dual-fetch)**: Initial data fetched server-side at build time via `Promise.all`; client-side refresh on mount via `GitHubDataWrapper` useEffect
 - **No API routes**: Static site, no server-side endpoints
 
 ### Style System
