@@ -118,9 +118,9 @@ export const PERFORMANCE_METRICS = [
 // Performance chart data
 export const PERFORMANCE_CHART_DATA = [
   { name: "LambdaWatch", size: 6, color: "#FF9900" },
-  { name: "Datadog Extension", size: 60, color: "#71717A" },
-  { name: "New Relic Layer", size: 45, color: "#71717A" },
+  { name: "Datadog Extension", size: 7, color: "#71717A" },
   { name: "CloudWatch (built-in)", size: 0, color: "#71717A" },
+  { name: "Other Extensions", size: 45, color: "#71717A" },
 ] as const;
 
 // Comparison table
@@ -148,12 +148,12 @@ export const COMPARISON_PRODUCTS = [
   {
     name: "Datadog",
     highlighted: false,
-    values: [false, false, false, false, false, false, "$$/host"],
+    values: [false, false, false, true, false, true, "$$/host"],
   },
   {
-    name: "New Relic",
+    name: "Other Extensions",
     highlighted: false,
-    values: [false, false, false, false, false, false, "$$/GB"],
+    values: [false, false, true, false, false, false, "$$/GB"],
   },
 ] as const;
 
