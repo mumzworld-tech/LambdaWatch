@@ -186,13 +186,14 @@ export function Architecture() {
                     containerRef={containerRef}
                     fromRef={fromRef}
                     toRef={nodeRefs[i + 1]}
-                    pathColor="rgba(255, 153, 0, 0.15)"
-                    pathWidth={2}
-                    pathOpacity={0.3}
-                    gradientStartColor="#FF9900"
-                    gradientStopColor="#CC7A00"
-                    duration={3}
-                    delay={i * 0.6}
+                    pathColor="rgba(255, 153, 0, 0.4)"
+                    pathWidth={3}
+                    pathOpacity={0.4}
+                    gradientStartColor="rgba(255, 186, 73, 0.8)"
+                    gradientStopColor="#ff9900"
+                    duration={1.5}
+                    delay={i * 1.5}
+                    repeatDelay={6} // (5 segments - 1) * 1.5 duration
                     curvature={0}
                   />
                 ))}
