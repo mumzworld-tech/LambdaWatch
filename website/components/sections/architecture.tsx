@@ -38,30 +38,66 @@ function ArchitectureNode({
   label,
   icon,
   nodeRef,
+  index = 0,
 }: {
   label: string;
   icon: string;
   nodeRef: React.RefObject<HTMLDivElement | null>;
+  index?: number;
 }) {
   const Icon = iconMap[icon] ?? FunctionSquare;
 
   return (
-    <div
+    <motion.div
       ref={nodeRef}
+      initial={{ opacity: 0, scale: 0.8, rotateX: 20 }}
+      whileInView={{ opacity: 1, scale: 1, rotateX: 0 }}
+      viewport={{ once: true }}
+      animate={{ y: [0, -8, 0] }}
+      whileHover={{
+        scale: 1.05,
+        y: -10,
+        transition: { duration: 0.2, y: { duration: 0.2 } }
+      }}
+      transition={{
+        duration: 0.6,
+        type: "spring",
+        y: {
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: index * 0.2,
+        }
+      }}
       className={cn(
-        "relative z-10 flex flex-col items-center gap-2",
-        "rounded-xl border border-border-medium bg-glass backdrop-blur-md",
-        "px-3 py-3 sm:px-4 sm:py-4",
-        "transition-colors duration-300 hover:border-border-strong hover:bg-glass-light"
+        "group relative z-10 flex flex-col items-center gap-4",
+        "rounded-2xl border border-brand/20 bg-glass/60 backdrop-blur-xl shadow-2xl shadow-brand/5",
+        "px-4 py-5 sm:px-6 sm:py-6 w-32",
+        "cursor-pointer"
       )}
+      style={{
+        transformStyle: "preserve-3d"
+      }}
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-lighter border border-border-subtle">
-        <Icon className="h-5 w-5 text-brand" />
-      </div>
-      <span className="text-[11px] sm:text-xs font-medium text-text-secondary text-center leading-tight whitespace-nowrap">
+      {/* 3D Glowing backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-br from-brand/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-2xl blur-xl" style={{ transform: "translateZ(-10px)" }} />
+
+      {/* 3D Icon Container */}
+      <motion.div
+        className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-surface-lighter to-surface border border-brand/30 shadow-[0_5px_15px_rgba(255,153,0,0.15)] transition-transform duration-300"
+        style={{ transform: "translateZ(20px)" }}
+      >
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/10 to-transparent" />
+        <Icon className="relative z-10 h-7 w-7 text-brand drop-shadow-[0_0_8px_rgba(255,153,0,0.6)]" />
+      </motion.div>
+
+      <span
+        className="text-xs font-bold text-text-primary text-center leading-tight transition-transform duration-300"
+        style={{ transform: "translateZ(10px)" }}
+      >
         {label}
       </span>
-    </div>
+    </motion.div>
   );
 }
 
@@ -126,16 +162,17 @@ export function Architecture() {
               </div>
 
               {/* Nodes: horizontal on desktop, 2-col grid on mobile */}
-              <div className="flex flex-col items-center gap-6 md:flex-row md:flex-nowrap md:justify-between">
+              <div className="flex flex-col items-center gap-8 md:flex-row md:flex-nowrap md:justify-between relative z-10">
                 {ARCHITECTURE_NODES.map((node, i) => (
                   <React.Fragment key={node.id}>
                     <ArchitectureNode
                       label={node.label}
                       icon={node.icon}
                       nodeRef={nodeRefs[i]}
+                      index={i}
                     />
                     {i < ARCHITECTURE_NODES.length - 1 && (
-                      <div className="h-6 w-px bg-border-medium md:hidden" />
+                      <div className="h-6 w-px bg-gradient-to-b from-brand/50 to-transparent md:hidden" />
                     )}
                   </React.Fragment>
                 ))}
@@ -185,11 +222,11 @@ export function Architecture() {
                   className={cn(
                     "!rounded-full !px-5 !py-2.5 !border flex items-center gap-3",
                     item.state === "ACTIVE" &&
-                      "!border-brand-green/30 !bg-brand-green/5",
+                    "!border-brand-green/30 !bg-brand-green/5",
                     item.state === "FLUSHING" &&
-                      "!border-brand/30 !bg-brand/5",
+                    "!border-brand/30 !bg-brand/5",
                     item.state === "IDLE" &&
-                      "!border-text-muted/20 !bg-text-muted/5"
+                    "!border-text-muted/20 !bg-text-muted/5"
                   )}
                 >
                   {/* Status dot */}

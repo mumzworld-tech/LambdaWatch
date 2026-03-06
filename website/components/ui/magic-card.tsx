@@ -118,26 +118,38 @@ export function MagicCard({
           opacity: gradientOpacity,
         }}
       />
-      <div className="relative">{children}</div>
+      <div
+        className="relative h-full"
+        style={{
+          transform: tilt ? "translateZ(30px)" : "none",
+          transition: "transform 0.3s ease"
+        }}
+      >
+        {children}
+      </div>
     </>
   )
 
   if (tilt) {
     return (
-      <motion.div
+      <div
         ref={cardRef}
-        className={cn("group relative rounded-[inherit]", className)}
+        className={cn("group relative rounded-[inherit] block", className)}
         onPointerMove={handlePointerMove}
         onPointerLeave={reset}
-        style={{
-          perspective: 800,
-          rotateX,
-          rotateY,
-          transformStyle: "preserve-3d",
-        }}
+        style={{ perspective: 1000 }}
       >
-        {cardContent}
-      </motion.div>
+        <motion.div
+          className="w-full h-full rounded-[inherit] bg-transparent"
+          style={{
+            rotateX,
+            rotateY,
+            transformStyle: "preserve-3d",
+          }}
+        >
+          {cardContent}
+        </motion.div>
+      </div>
     )
   }
 
